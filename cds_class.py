@@ -155,5 +155,6 @@ class CdsERA5:
                         
         # Extract year and month from time coordinates for labeling
         months = ds_filtered['time'].dt.strftime('%Y-%m').values
-      
+        monthly_means = ds_filtered[variable_name].groupby('time.month').mean(dim=['latitude', 'longitude']).values
+        
         return months, monthly_means
