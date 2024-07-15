@@ -59,13 +59,6 @@ class LLM:
         except Exception as e:
             logger.error(f"Issue in the LLM location configuration: {e}")
             return {}
-            
-    
-    def check_for_None(self, data):
-        for key, value in data.items():
-            if value == "None":
-                data[key] = input(f"Please enter {key}: ")
-        return data
     
     def get_details_from_short_name(self, data, short_name):
         for category, items in data.items():
@@ -136,34 +129,34 @@ class LLM:
             "data": {}
             }
     
-      try:
-        description, missing_key_message = self.generate_product_review_description(variable_names, product_info, geo_info)
-        
-        if missing_key_message:
-            agent_name = "Callback_agent"
-            information_notification = self.set_agent(agent_name, descriptions_text = missing_key_message)
-            logger.info("Callback_agent selected")
-            status_response.update({
-            "status": "information_notification",
-            "data": information_notification
-            })
-        
-        else:
-            agent_name = "Review_agent"
-            review_request = self.set_agent(agent_name, descriptions_text=description)
-            logger.info("Review_agent selected")
-            status_response.update({
-            "status": "success",
-            "data": review_request
-            })
-        
-      except Exception as e:
-          logger.error(f"Error getting review request with agent {agent_name}: {e}")
-          status_response.update({
-          "error_message": str(e)
-          })
+        try:
+            description, missing_key_message = self.generate_product_review_description(variable_names, product_info, geo_info)
             
-        return status_response
+            if missing_key_message:
+                agent_name = "Callback_agent"
+                information_notification = self.set_agent(agent_name, descriptions_text = missing_key_message)
+                logger.info("Callback_agent selected")
+                status_response.update({
+                "status": "information_notification",
+                "data": information_notification
+                })
+            
+            else:
+                agent_name = "Review_agent"
+                review_request = self.set_agent(agent_name, descriptions_text=description)
+                logger.info("Review_agent selected")
+                status_response.update({
+                "status": "success",
+                "data": review_request
+                })
+            
+        except Exception as e:
+            logger.error(f"Error getting review request with agent {agent_name}: {e}")
+            status_response.update({
+            "error_message": str(e)
+            })
+                
+            return status_response
     
     def generate_product_review_description(self, variables: List[str], product_info: Dict[str, Any], geo_info: Dict[str, Any]) -> str:
         """
