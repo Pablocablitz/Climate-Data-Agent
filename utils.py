@@ -239,3 +239,36 @@ def generate_descriptions(date_type, means, units):
     for year, mean in zip(date_type, means):
         descriptions[year] = f"{mean:.2f} {units}"
     return descriptions
+
+def clean_json_response(response):
+    """
+    Cleans a JSON string by removing any content before the first `{` and after the last `}`.
+
+    Args:
+    response (str): The raw JSON response string.
+
+    Returns:
+    dict: A dictionary parsed from the cleaned JSON string.
+    """
+    # Find the first '{' and last '}'
+    start_idx = response.find('{')
+    end_idx = response.rfind('}')
+    
+    if start_idx == -1 or end_idx == -1:
+        print("No JSON object found in the response.")
+        return None
+    
+    # Extract the JSON string
+    json_str = response[start_idx:end_idx + 1]
+    
+    # Replace single quotes with double quotes for valid JSON
+    json_str = json_str.replace("'", '"')
+    
+    # Optionally, print the intermediate JSON string for debugging
+    # print(json_str)
+    
+    try:
+        return json.loads(json_str)
+    except json.JSONDecodeError as e:
+        print(f"Error decoding JSON: {e}")
+        return None
