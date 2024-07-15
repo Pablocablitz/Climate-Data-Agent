@@ -1,30 +1,29 @@
-
-from llm_processor import LargeLanguageModelProcessor
-from llm_agent import LargeLanguageModelAgent
 from chatbot import Chatbot
-from data_handler import DataHandler
 import streamlit as st
 
 
 class EOChatBot():
-    def __init__():
+    def __init__(self):
         # Init stuff
-        llama3 = LargeLanguageModelProcessor()
-        chatbot = chatbot()
 
-    def run():
+        self.chatbot = Chatbot()
+
+    def run(self):
 
         while True:
             # Get User Input
             if (user_message := st.chat_input()):
-                chatbot.process_request(user_message)
+                self.chatbot.process_request(user_message)
                 user_message = None
+
+                request_complete = True
             # Process user Input
             # Output user input
 
             if (request_complete):
-                process_request() # data download, data processing, analysis...
-                output_results()
+                self.chatbot.execute_request()
+                self.chatbot.output_results()
+                request_complete = False
 
 
 
