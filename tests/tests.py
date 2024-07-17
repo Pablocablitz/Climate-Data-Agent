@@ -5,7 +5,7 @@ from prompt_manager import PromptManager
 
 class EOChatbotTester():
     def __init__(self):
-        self.chatbot = chatbot
+        self.chatbot = Chatbot()
         self.tests = self.__load_tests()
 
     def __load_tests(self):

@@ -4,6 +4,7 @@ class PromptManager():
     def __init__(self, llm_handler):
         self.llm_handler = llm_handler
         self.__load_agents()
+        self.specific_product_list = None
         pass
     
     def retrieve_information(self, agent_type, user_prompt):
@@ -24,17 +25,21 @@ class PromptManager():
         
         # Get the attribute details from the config
         attribute = self.__agents['attributes'][agent_type]
-        
+
+
         # Format the general template with the attribute details
         system_prompt = self.__agents['general_template'].format(
-            expertise_area=attribute["expertise_area"],
-            task_description=attribute["task_description"],
-            list_of_types=attribute["list_of_types"],
-            response_type=attribute["response_type"],
-            guideline_1=attribute["guideline_1"],
-            guideline_2=attribute["guideline_2"],
+            expertise_area  = attribute["expertise_area"],
+            task_description = attribute["task_description"],
+            list_of_types = attribute["list_of_types"],
+            response_type = attribute["response_type"],
+            guideline_1 = attribute["guideline_1"],
+            guideline_2 = attribute["guideline_2"],
         )
         
+        if agent_type == "specific_product_agent":
+            system_prompt = system_prompt.format(specific_product_list = self.specific_product_list)
+            
         return system_prompt
     
     def load_config_file(file_path: str) -> dict:

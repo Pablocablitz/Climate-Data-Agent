@@ -2,7 +2,7 @@ from llm_processor import LargeLanguageModelProcessor
 from prompt_manager import PromptManager
 from data_handler import DataHandler
 from product_handler import ProductHandler
-
+from utils import Utilities
 
 
 
@@ -31,16 +31,20 @@ class Chatbot():
         self.request.location = self.prompt_manager.retrieve_information("location_agent", user_prompt)
 
         # Step 2 - get time interval
-        self.timeframe = self.prompt_manager.retrieve_information("timeframe_agent", user_prompt)
+        self.request.timeframe = self.prompt_manager.retrieve_information("timeframe_agent", user_prompt)
 
         # Step 3 - get product type
-        self.product = self.prompt_manager.retrieve_information("product_agent", user_prompt)
+        self.request.product = self.prompt_manager.retrieve_information("product_agent", user_prompt)
+        
+        # Step 4 - get specific product name
+        self.prompt_manager.specific_product_list = self.request.construct_product_agent_instruction()
+        self.request.specific_product = self.prompt_manager.retrieve_information("specific_product_agent", user_prompt)
 
-        # Step 4 - get analysis type
-        self.analysis = self.prompt_manager.retrieve_information("analysis_agent", user_prompt)
+        # Step 5 - get analysis type
+        self.request.analysis = self.prompt_manager.retrieve_information("analysis_agent", user_prompt)
 
-        # Step 5 - get visualisation type
-        self.visualisation = self.prompt_manager.retrieve_information("visualisation_agent", user_prompt)        
+        # Step 6 - get visualisation type
+        self.request.visualisation = self.prompt_manager.retrieve_information("visualisation_agent", user_prompt)        
         
         self.requests.append(self.request)
         
@@ -48,13 +52,14 @@ class Chatbot():
     def process_request(self, user_prompt): 
         self.extract_information(user_prompt)
         # data download, data processing, analysis...
-        self.request.process_request()
+        self.request.process_request(self.requests)
         
         if (self.request.request_complete):
-            # do normal stuff
-            pass
+            
         else:
             print("this is a dummy for a future callback")
+            
+        
 
     def output_results(self):
         pass
@@ -62,11 +67,16 @@ class Chatbot():
 
 class EORequest():
     def __init__(self):
-        self.product_handler = ProductHandler()
+        self.utils = Utilities()
         self.request_type = None
         self.location = None
-        self.time_interval = None
+        self.timeframe = None
+        self.product = None
+        self.specific_product = None
+        self.analysis = None
+        self.visualisation = None
         self.request_complete = False
+        self.__load_variables()
         ## and more stuff...initialize as None I guess
 
     def check_validity_of_request(self, information_dict):
@@ -77,9 +87,10 @@ class EORequest():
 
         return errors
     
-    def process_request(self, information_dict):
+
+    def process_request(self, requests):
         try:# if error occurs callback message to the user 
-            errors = self.check_validity_of_request(information_dict)
+            errors = self.check_validity_of_request(requests)
             if errors:
                 raise Exception("Missing_information")
             else:
@@ -88,7 +99,12 @@ class EORequest():
             
         except:
             print('An exception occurred in EORequest process_request')
-        self.product_handler.process_data(information_dict)
+
+    def construct_product_agent_instruction(self):
+        product_list = [product['name'] for product in self.__variables.get(self.product, [])]
+        instruction_format = f"'{self.product}':\n- {product_list}"
+        return instruction_format
     
-    def construct_product_agent_instruction(keyword: str):
-        
+    def __load_variables(self):
+        self.__variables = self.utils.load_config_file("variables.yaml") 
+    

@@ -48,6 +48,17 @@ attributes:
         guideline_1: "Only answer with the JSON file without any other information."
         guideline_2: "If there is no product detected, answer with None."
 
+    specific_product_agent:
+        expertise_area: "selecting the most appropriate product within a given category"
+        task_description: "choose the specific product to use based on the category and prompt provided"
+        list_of_types: "Choose the most suitable product from the following list of products in the category {specific_product_list}"
+        response_type: |
+          {
+            "chosen_product": "product_name"
+          }
+        guideline_1: "If there is no product type found, set 'chosen_product' to 'None'."
+        guideline_2: "Only answer with the JSON file without any other information."
+
     visualisation_agent:
         expertise_area: "identifying visualization types"
         task_description: "extract the main visualization type and any other visualization types from the given request"
