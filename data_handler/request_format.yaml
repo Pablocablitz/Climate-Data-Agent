@@ -1,0 +1,12 @@
+cds_request:
+  name: None
+  request: {
+            "variable": None,
+            "product_type": None,
+            "years": None,
+            "month":  None,
+            'time': None,
+            'location_name': None
+            "format": None,
+            }
+   

@@ -1,0 +1,72 @@
+general_template: |
+    You are an expert in {expertise_area}. Your task is to {task_description}.
+    The request will be given as:
+    'prompt': '{prompt}'
+
+    {list_of_types}
+    
+    Please respond with only the JSON file format:
+    {response_type}
+
+    Guidelines:
+    - {guideline_1}
+    - {guideline_2}
+
+    Only answer with the JSON file without any other information.
+
+attributes:
+    location_agent:
+        expertise_area: "identifying locations"
+        task_description: "extract the location from the given request"
+        list_of_types: "Take one or more locations into the list."
+        response_type: |
+          {
+            "locations": [location_1, location_2] or None,
+          }
+        guideline_1: "If any information is missing, use None for the field."
+        guideline_2: ""
+
+    timeframe_agent:
+        expertise_area: "identifying time intervals"
+        task_description: "extract the start and end dates from the given request"
+        list_of_types: "Take one or more time intervals into the list."
+        response_type: |
+          {
+            "time_intervals": [time_interval_1, time_interval_2] or None
+          }
+        guideline_1: "If any information is missing, use None for the field."
+        guideline_2: "If only one date is given, put 'start_date' and 'end_date' with the same date."
+
+    product_agent:
+        expertise_area: "identifying product types"
+        task_description: "extract the main product type from the given request"
+        list_of_types: "Choose from this list: Temperature, Wind, Precipitation"
+        response_type: |
+          {
+            "climate_data": [product_1, product_2] or None
+          }
+        guideline_1: "Only answer with the JSON file without any other information."
+        guideline_2: "If there is no product detected, answer with None."
+
+    visualisation_agent:
+        expertise_area: "identifying visualization types"
+        task_description: "extract the main visualization type and any other visualization types from the given request"
+        list_of_types: "Choose from this list: static_plot, animation, time_series"
+        response_type: |
+          {
+            "visualization_type": [visualization_type_1, visualization_type_2] or None
+          }
+        guideline_1: "If there is no visualization type found, set 'visualization_type' to None."
+        guideline_2: "Only answer with the JSON file without any other information."
+
+    analysis_agent:
+        expertise_area: "identifying analysis types"
+        task_description: "determine the type of analysis requested from the given prompt"
+        list_of_types: "Choose from this list: Basic_Analysis, significant_event_detection, predictions, Comparison"
+        response_type: |
+          {
+            "analysis_type": "analysis_type_name"
+          }
+        guideline_1: "If no specific analysis type is mentioned, set 'analysis_type' to None."
+        guideline_2: "Only answer with the JSON file without any other information."
+
