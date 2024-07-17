@@ -1,5 +1,7 @@
 from chatbot import Chatbot
 import yaml
+import json
+from prompt_manager import PromptManager
 
 class EOChatbotTester():
     def __init__(self):
@@ -14,6 +16,27 @@ class EOChatbotTester():
         pass
     
     def key_tester(self):
+        # Define example dictionaries
+        timeframe_dict = {
+            "time_intervals": ["2024-01-01 to 2024-01-31"]
+        }
+
+        product_dict = {
+            "climate_data": None
+        }
+
+        visualization_dict = {
+            "visualization_type": ["static_plot"]
+        }
+
+        analysis_dict = {
+            "analysis_type": "Basic_Analysis"
+        }
+
+        multiple_products_dict = {
+            "climate_data": ["Temperature", "Wind"]
+        }
+               
         # Collect dictionaries in a parent dictionary
         parent_dict = {
             "timeframe_agent": timeframe_dict,
@@ -21,7 +44,7 @@ class EOChatbotTester():
             "visualisation_agent": visualization_dict,
             "analysis_agent": analysis_dict,
             "multiple_products_agent": multiple_products_dict
-}
+        }
         
         # Iterate over each sub-dictionary and print the values
         for agent_name, sub_dict in parent_dict.items():
