@@ -1,7 +1,6 @@
 from llm_processor import LargeLanguageModelProcessor
 from prompt_manager import PromptManager
 from data_handler import DataHandler
-from product_handler import ProductHandler
 from utils import Utilities
 import googlemaps
 
@@ -56,7 +55,7 @@ class Chatbot():
         self.request.process_request(self.requests)
         
         if (self.request.request_complete):
-            
+            pass    
         else:
             print("this is a dummy for a future callback")
             
