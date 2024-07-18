@@ -1,5 +1,5 @@
-from cds import ClimateDataStorageHandler
-from cda_classes.chatbot import EORequest
+from data_handler.cds import ClimateDataStorageHandler
+from cda_classes.eorequest import EORequest
 from utils.utils import Utilities
 
 class DataHandler():

@@ -1,1 +1,1 @@
-from data_handler import DataHandler
+from data_handler.data_handler import DataHandler

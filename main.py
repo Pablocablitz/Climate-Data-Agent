@@ -1,5 +1,6 @@
 from cda_classes.chatbot import Chatbot
 import streamlit as st
+import json
 
 
 class EOChatBot():
@@ -9,21 +10,23 @@ class EOChatBot():
         self.chatbot = Chatbot()
 
     def run(self):
+        request_complete = False
 
-        while True:
-            # Get User Input
-            if (user_message := st.chat_input()):
-                self.chatbot.process_request(user_message)
-                user_message = None
+        # Get User Input
+        if (user_message := st.chat_input('user')):
+            self.chatbot.process_request(user_message)
+            st.write(json(self.chatbot.request))
+            user_message = None
 
-                request_complete = True
-            # Process user Input
-            # Output user input
+            # request_complete = True
+        # Process user Input
+        # Output user input
 
-            if (request_complete):
-                self.chatbot.execute_request()
-                self.chatbot.output_results()
-                request_complete = False
+        if (request_complete):
+            self.chatbot.execute_request()
+            self.chatbot.output_results()
+            request_complete = False
+            st.stop()
 
 
 
