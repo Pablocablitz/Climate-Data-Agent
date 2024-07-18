@@ -1,7 +1,7 @@
 from cda_classes.chatbot import Chatbot
 import streamlit as st
 import json
-
+import jsonpickle
 
 class EOChatBot():
     def __init__(self):
@@ -15,7 +15,7 @@ class EOChatBot():
         # Get User Input
         if (user_message := st.chat_input('user')):
             self.chatbot.process_request(user_message)
-            st.write(json(self.chatbot.request))
+            st.write(jsonpickle.encode(self.chatbot.request))
             user_message = None
 
             # request_complete = True

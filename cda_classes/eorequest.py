@@ -1,5 +1,6 @@
 from utils.utils import Utilities
 import googlemaps
+from collections.abc import Iterable
 
 
 class EORequest():
@@ -11,18 +12,37 @@ class EORequest():
         self.specific_product = None
         self.analysis = None
         self.visualisation = None
-        self.request_complete = False
+        self.request_valid = False
+        
         self.__load_variables()
         ## and more stuff...initialize as None I guess
 
-    def check_validity_of_request(self, information_dict):
+    def check_validity_of_request(self):
         errors = []
         
-        self.request_complete = True
-        for value in information_dict.items():
-            if (value == "None" or value == None):
-                errors.append(f"{value} is missing\r\n")
-                self.request_complete = False
+        self.request_valid = True
+        # randomobj = EORequest()
+        # print(vars(randomobj))
+        properties = vars(self)
+            # [attr for attr in dir(EORequest) if 
+            #  not callable(getattr(EORequest, attr)) 
+            #  and not attr.startswith("__")]
+        print(properties)
+        main_properties = {key: value for key, value in properties.items() if not key.startswith("_")}
+        print(main_properties)
+        for key, value in main_properties.items():
+            if isinstance(value, Iterable) and not isinstance(value, str):
+                for subvalue in value:
+                    if not Utilities.valueisvalid(subvalue):
+                        self.request_valid = False
+                        print("checking validity of property: " + str(subvalue))
+                        errors.append(f"{key} is missing\r\n")
+                        break  # Exit the loop after finding an invalid subvalue
+            else:
+                if not Utilities.valueisvalid(value):
+                    self.request_valid = False
+                    print("checking validity of property: " + str(value))
+                    errors.append(f"{key} is missing\r\n")
 
         return errors
     
@@ -31,7 +51,7 @@ class EORequest():
        pass
 
     def construct_product_agent_instruction(self):
-        product_list = [product['name'] for product in self.__variables.get(self.product, [])]
+        product_list = [product['name'] for product in self.__variables.get(self.product[0], [])]
         instruction_format = f"'{self.product}':\n- {product_list}"
         return instruction_format
     
@@ -83,4 +103,3 @@ class EORequest():
             }
         else:
             return None
-        

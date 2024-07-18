@@ -11,10 +11,10 @@ class PromptManager():
     def retrieve_information(self, agent_type, user_prompt):
         system_prompt = self.__construct_system_prompt(agent_type, user_prompt)
         information = self.llm_handler.generate_response(system_prompt)
-        
+        cleaned_information = Utilities.cleaned_dict_output(information)
         # Responses only ever have one key value pair, so grab next key to know type of response (timeframe, location...)
-        dict_key = next(iter(information)) 
-        dict_value = information[dict_key]
+        dict_key = next(iter(cleaned_information)) 
+        dict_value = cleaned_information[dict_key]
         return dict_value
 
     def __load_agents(self):
@@ -44,3 +44,5 @@ class PromptManager():
             system_prompt = system_prompt.format(specific_product_list = self.specific_product_list)
             
         return system_prompt
+    
+    # show me temperature in rome in 2012

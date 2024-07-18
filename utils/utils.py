@@ -1,6 +1,10 @@
 import yaml 
 import json 
 
+
+# TODO:
+# A function to clean up the output from LLM and ensure it has consistent format (e.g. always a string that says None)
+
 class Utilities():
     
     @staticmethod
@@ -19,7 +23,7 @@ class Utilities():
         return config
 
     @staticmethod
-    def cleaned_dict_output(response):
+    def cleaned_dict_output(response: str) -> dict:
         """
         Cleans a JSON string by removing any content before the first `{` and after the last `}`.
 
@@ -42,9 +46,19 @@ class Utilities():
         
         # Replace single quotes with double quotes for valid JSON
         json_str = json_str.replace("'", '"')
-        
+        print(json_str)
         try:
             return json.loads(json_str)
         except json.JSONDecodeError as e:
             print(f"Error decoding JSON: {e}")
             return None
+        
+        
+    @staticmethod
+    def valueisvalid(value):
+        valueisvalid = True
+        if (value == "None" or value == None or not value):
+            valueisvalid = False        
+        return valueisvalid
+    
+    

@@ -21,9 +21,9 @@ attributes:
         list_of_types: "Take one or more locations into the list."
         response_type: |
           {
-            "locations": [location_1, location_2] or None,
+            "locations": [location_1, location_2] or "None",
           }
-        guideline_1: "If any information is missing, use None for the field."
+        guideline_1: "If any information is missing, use 'None' for the field."
         guideline_2: ""
 
     timeframe_agent:
@@ -32,9 +32,9 @@ attributes:
         list_of_types: "Take one or more time intervals into the list."
         response_type: |
           {
-            "time_intervals": [time_interval_1, time_interval_2] or None
+            "time_intervals": [time_interval_1, time_interval_2] or "None"
           }
-        guideline_1: "If any information is missing, use None for the field."
+        guideline_1: "If any information is missing, use 'None' for the field."
         guideline_2: "If only one date is given, put 'start_date' and 'end_date' with the same date."
 
     product_agent:
@@ -43,19 +43,19 @@ attributes:
         list_of_types: "Choose from this list: Temperature, Wind, Precipitation"
         response_type: |
           {
-            "climate_data": [product_1, product_2] or None
+            "climate_data": [product_1, product_2] or "None"
           }
         guideline_1: "Only answer with the JSON file without any other information."
-        guideline_2: "If there is no product detected, answer with None."
+        guideline_2: "If there is no product detected, answer with 'None'."
 
     specific_product_agent:
         expertise_area: "selecting the most appropriate product within a given category"
         task_description: "choose the specific product to use based on the category and prompt provided"
         list_of_types: "Choose the most suitable product from the following list of products in the category {specific_product_list}"
         response_type: |
-          {
+          {{
             "chosen_product": "product_name"
-          }
+          }}
         guideline_1: "If there is no product type found, set 'chosen_product' to 'None'."
         guideline_2: "Only answer with the JSON file without any other information."
 
@@ -65,9 +65,9 @@ attributes:
         list_of_types: "Choose from this list: static_plot, animation, time_series"
         response_type: |
           {
-            "visualization_type": [visualization_type_1, visualization_type_2] or None
+            "visualization_type": [visualization_type_1, visualization_type_2] or "None"
           }
-        guideline_1: "If there is no visualization type found, set 'visualization_type' to None."
+        guideline_1: "If there is no visualization type found, set 'visualization_type' to 'None'."
         guideline_2: "Only answer with the JSON file without any other information."
 
     analysis_agent:
@@ -78,6 +78,6 @@ attributes:
           {
             "analysis_type": "analysis_type_name"
           }
-        guideline_1: "If no specific analysis type is mentioned, set 'analysis_type' to None."
+        guideline_1: "If no specific analysis type is mentioned, set 'analysis_type' to 'None'."
         guideline_2: "Only answer with the JSON file without any other information."
 

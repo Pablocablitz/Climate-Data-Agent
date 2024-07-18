@@ -2,6 +2,7 @@ from cda_classes.llm_processor import LargeLanguageModelProcessor
 from cda_classes.prompt_manager import PromptManager
 from data_handler.data_handler import DataHandler
 from cda_classes.eorequest import EORequest
+import json
 
 class Chatbot():
     def __init__(self):
@@ -44,15 +45,14 @@ class Chatbot():
         self.request.visualisation = self.prompt_manager.retrieve_information("visualisation_agent", user_prompt)        
         
         self.requests.append(self.request)
-        
 
     def process_request(self, user_prompt): 
         self.extract_information(user_prompt)
-        self.request.check_validity_of_request(self.requests)
+        print(self.request.check_validity_of_request())
         # data download, data processing, analysis...
 
         
-        if (self.request.request_complete):
+        if (self.request.request_valid):
             pass    
         else:
             print("this is a dummy for a future callback")
