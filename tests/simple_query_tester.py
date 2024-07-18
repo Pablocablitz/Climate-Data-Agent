@@ -1,9 +1,9 @@
-from chatbot import Chatbot
+from cda_classes.chatbot import Chatbot
 import yaml
 import json
-from prompt_manager import PromptManager
+from cda_classes.prompt_manager import PromptManager
 
-class EOChatbotTester():
+class SimpleQueryTester():
     def __init__(self):
         self.chatbot = Chatbot()
         self.tests = self.__load_tests()

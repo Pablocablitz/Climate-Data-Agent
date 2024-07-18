@@ -1,4 +1,4 @@
-from chatbot import Chatbot
+from cda_classes.chatbot import Chatbot
 import streamlit as st
 
 

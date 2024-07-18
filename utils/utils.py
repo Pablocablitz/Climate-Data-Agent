@@ -2,6 +2,7 @@ import yaml
 
 class Utilities():
     
+    @staticmethod
     def load_config_file(self, file_path: str) -> dict:
         """
         Load YAML file.

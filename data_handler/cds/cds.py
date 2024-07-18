@@ -1,6 +1,6 @@
 import cdsapi
 from loguru import logger
-from chatbot import EORequest
+from cda_classes.chatbot import EORequest
 
 class ClimateDataStorageHandler():
     def __init__(self, request):
