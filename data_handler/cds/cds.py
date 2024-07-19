@@ -8,7 +8,7 @@ import xarray as xr
 import numpy as np
 
 
-api_key = "AIzaSyD7S9rejpC8AQJcV4fzN5NKRncGncdrs8U"
+api_key = "YOUR_GOOGLE_API_KEY"
 
 class ClimateDataStorageHandler():
     def __init__(self):
