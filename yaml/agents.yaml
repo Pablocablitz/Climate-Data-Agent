@@ -15,6 +15,16 @@ general_template: |
     Only answer with the JSON file without any other information.
 
 attributes:
+    request_type_agent:
+        expertise_area: "identifying climate data"
+        task_description: "determine if the given request is related to climate data"
+        list_of_types: ""
+        response_type: |
+            {{
+                "climate_data": "True" or "False"
+            }}
+        guideline_1: "If the request is related to climate data, set 'climate_data' to 'True'."
+        guideline_2: "If the request is not related to climate data, set 'climate_data' to 'False'."
     location_agent:
         expertise_area: "identifying locations"
         task_description: "extract the location from the given request"
@@ -29,13 +39,19 @@ attributes:
     timeframe_agent:
         expertise_area: "identifying time intervals"
         task_description: "extract the start and end dates from the given request"
-        list_of_types: "Take one or more time intervals into the list."
+        list_of_types: "Extract the exact start and end dates from the prompt or calculate them based on the current date."
         response_type: |
-          {
-            "time_intervals": [time_interval_1, time_interval_2] or "None"
-          }
-        guideline_1: "If any information is missing, use 'None' for the field."
-        guideline_2: "If only one date is given, put 'start_date' and 'end_date' with the same date."
+          {{
+            "time_interval": ["start_date(DD/MM/YYYY)", "end_date(DD/MM/YYYY)"]
+          }}
+        guideline_1: |
+                       - If a specific date range is mentioned, extract the exact start and end dates from the prompt.
+                       - If the prompt mentions a relative date range (e.g., 'last 30 days'), calculate the dates based on the current date, which is 18/07/2024.
+                       - If the calculated end date is in the future, set it as 18/07/2024.
+        guideline_2: | 
+                      - If only a single year is mentioned, use 01/01/YYYY for the start date and 31/12/YYYY for the end date.
+                      - Always use the format DD/MM/YYYY for dates.
+                      - If the prompt is ambiguous or does not mention specific dates or ranges, default to the current year: start_date = '01/01/2024', end_date = '18/07/2024'.
 
     product_agent:
         expertise_area: "identifying product types"
@@ -43,9 +59,9 @@ attributes:
         list_of_types: "Choose from this list: Temperature, Wind, Precipitation"
         response_type: |
           {
-            "climate_data": [product_1, product_2] or "None"
+            "climate_data": ["product_1", "product_2"] or "None"
           }
-        guideline_1: "Only answer with the JSON file without any other information."
+        guideline_1: "It is essential that you place the products in a list."
         guideline_2: "If there is no product detected, answer with 'None'."
 
     specific_product_agent:

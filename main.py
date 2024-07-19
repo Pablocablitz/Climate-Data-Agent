@@ -1,6 +1,5 @@
 from cda_classes.chatbot import Chatbot
 import streamlit as st
-import json
 import jsonpickle
 
 class EOChatBot():

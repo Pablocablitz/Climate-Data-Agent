@@ -13,8 +13,8 @@ class EORequest():
         self.analysis = None
         self.visualisation = None
         self.request_valid = False
-        
-        self.__load_variables()
+        self.variables = None
+        self.load_variables()
         ## and more stuff...initialize as None I guess
 
     def check_validity_of_request(self):
@@ -28,9 +28,9 @@ class EORequest():
             #  not callable(getattr(EORequest, attr)) 
             #  and not attr.startswith("__")]
         print(properties)
-        main_properties = {key: value for key, value in properties.items() if not key.startswith("_")}
-        print(main_properties)
-        for key, value in main_properties.items():
+        self.main_properties = {key: value for key, value in properties.items() if not key.startswith("_")}
+        print(self.main_properties)
+        for key, value in self.main_properties.items():
             if isinstance(value, Iterable) and not isinstance(value, str):
                 for subvalue in value:
                     if not Utilities.valueisvalid(subvalue):
@@ -51,12 +51,13 @@ class EORequest():
        pass
 
     def construct_product_agent_instruction(self):
-        product_list = [product['name'] for product in self.__variables.get(self.product[0], [])]
-        instruction_format = f"'{self.product}':\n- {product_list}"
+        product_list = [product['name'] for product in self.variables.get(self.product[0], [])]
+        print(product_list)
+        instruction_format = f"'{self.product[0]}':\n- {product_list}"
         return instruction_format
     
-    def __load_variables(self):
-        self.__variables = Utilities.load_config_file("yaml/variables.yaml") 
+    def load_variables(self):
+        self.variables = Utilities.load_config_file("yaml/variables.yaml") 
         
     def get_coordinates_from_location(self, api_key: str, min_size: float = 10) -> dict:
         """Get a bounding box for a location using Google Maps Geocoding API with a minimum size."""

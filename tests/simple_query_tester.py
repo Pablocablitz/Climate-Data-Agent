@@ -52,3 +52,4 @@ class SimpleQueryTester():
             single_key = next(iter(sub_dict))
             print(f"Key: {single_key}")
             print(f"Value: {sub_dict[single_key]}\n")
+            

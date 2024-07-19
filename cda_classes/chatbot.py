@@ -2,12 +2,15 @@ from cda_classes.llm_processor import LargeLanguageModelProcessor
 from cda_classes.prompt_manager import PromptManager
 from data_handler.data_handler import DataHandler
 from cda_classes.eorequest import EORequest
-import json
+from cda_classes.visualisation_handler import VisualisationHandler
+import jsonpickle
 
 class Chatbot():
     def __init__(self):
         self.llama3 = LargeLanguageModelProcessor()
         self.prompt_manager = PromptManager(self.llama3)
+        self.data_handler = DataHandler()
+        self.vis_handler = VisualisationHandler()
 
         # Can then append current requests to self.request when all requests have been processed...
         # May want to move this history functionality into a separate file (some type of logging package/module)
@@ -24,6 +27,9 @@ class Chatbot():
 
     def extract_information(self, user_prompt):
         # Initialize the dictionary to store responses
+        
+        # Step 0 - check context
+        self.request.request_type = self.prompt_manager.retrieve_information("request_type_agent", user_prompt)
         # Step 1 - get location
         
         self.request.location = self.prompt_manager.retrieve_information("location_agent", user_prompt)
@@ -37,7 +43,7 @@ class Chatbot():
         # Step 4 - get specific product name
         self.prompt_manager.specific_product_list = self.request.construct_product_agent_instruction()
         self.request.specific_product = self.prompt_manager.retrieve_information("specific_product_agent", user_prompt)
-
+        print(self.prompt_manager.specific_product_list)
         # Step 5 - get analysis type
         self.request.analysis = self.prompt_manager.retrieve_information("analysis_agent", user_prompt)
 
@@ -50,15 +56,18 @@ class Chatbot():
         self.extract_information(user_prompt)
         print(self.request.check_validity_of_request())
         # data download, data processing, analysis...
-
         
         if (self.request.request_valid):
             pass    
         else:
             print("this is a dummy for a future callback")
-            
         
-
+        self.data_handler.construct_request(self.request)
+        self.data_handler.download("ERA5")
+        
+        # self.vis_handler.visualise_data(self.data_handler)
+        self.vis_handler.visualise_data(self.data_handler)
+        
     def output_results(self):
         pass
 
