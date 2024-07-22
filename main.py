@@ -9,14 +9,28 @@ class EOChatBot():
         self.chatbot = Chatbot()
 
     def run(self):
+        print(st.session_state)
+        # streamlit chatbot interface with chat history
+        if "messages" not in st.session_state:
+            st.session_state.messages = []
+        for message in st.session_state.messages:
+            with st.chat_message(message["role"]):
+                if message.get("content"):
+                    st.markdown(message["content"], unsafe_allow_html=True)
+                if message.get("video"):
+                    st.video(message["video"])
+
+                    
         request_complete = False
 
         # Get User Input
         if (user_message := st.chat_input('user')):
+            st.session_state.messages.append({"role": "user", "content": user_message})
+            with st.chat_message("user"):
+                st.markdown(user_message)
+                
             self.chatbot.process_request(user_message)
-            st.write(jsonpickle.encode(self.chatbot.request))
-            user_message = None
-
+            
             # request_complete = True
         # Process user Input
         # Output user input

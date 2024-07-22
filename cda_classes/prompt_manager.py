@@ -1,15 +1,17 @@
 import yaml
 from utils.utils import Utilities
+import jsonpickle 
 
 class PromptManager():
     def __init__(self, llm_handler):
         self.llm_handler = llm_handler
         self.__load_agents()
         self.specific_product_list = None
+        self.requests = None
         pass
     
     def retrieve_information(self, agent_type, user_prompt):
-        system_prompt = self.__construct_system_prompt(agent_type, user_prompt)
+        system_prompt = self.construct_system_prompt(agent_type, user_prompt)
         information = self.llm_handler.generate_response(system_prompt)
         cleaned_information = Utilities.cleaned_dict_output(information)
         # Responses only ever have one key value pair, so grab next key to know type of response (timeframe, location...)
@@ -17,10 +19,16 @@ class PromptManager():
         dict_value = cleaned_information[dict_key]
         return dict_value
 
+    def conversation_assistant_to_user(self, agent_type, user_prompt, requests):
+        self.requests = requests
+        system_prompt = self.construct_system_prompt(agent_type, user_prompt)
+        self.callback = self.llm_handler.generate_response(system_prompt)
+        
+        
     def __load_agents(self):
         self.__agents = Utilities.load_config_file("yaml/agents.yaml")
 
-    def __construct_system_prompt(self, agent_type, user_prompt):
+    def construct_system_prompt(self, agent_type, user_prompt):
                 # Check if the attribute name exists in the config
         if agent_type not in self.__agents['attributes']:
             raise ValueError(f"Attribute '{agent_type}' not found in the configuration.")
@@ -38,11 +46,25 @@ class PromptManager():
             response_type = attributes["response_type"],
             guideline_1 = attributes["guideline_1"],
             guideline_2 = attributes["guideline_2"],
+            guideline_3 = attributes["guideline_3"]
         )
         
         if agent_type == "specific_product_agent":
             system_prompt = system_prompt.format(specific_product_list = self.specific_product_list)
-            
+        if agent_type == "review_agent":
+            system_prompt = system_prompt.format(
+                collected_information=(
+                    f"I will search for the climate product for {self.requests['location']} "
+                    f"covers the period {self.requests['timeframe']}. "
+                    f"The primary focus is on the category '{self.requests['product']}', "
+                    f"specifically looking at the variable '{self.requests['specific_product']}'."
+                )
+            )
+        if agent_type == "missing_info_agent":
+            formatted_string = '\n'.join(f"- {item}" for item in self.requests)
+            system_prompt = system_prompt.format(errors = f"{formatted_string}")
+
         return system_prompt
     
     # show me temperature in rome in 2012
+    

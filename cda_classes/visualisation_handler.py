@@ -47,7 +47,6 @@ class VisualisationHandler():
         ax.add_feature(cfeature.LAND, edgecolor='black', facecolor='lightgray')
         ax.add_feature(cfeature.COASTLINE, linewidth=0.5)
         ax.add_feature(cfeature.BORDERS, linewidth=0.5)
-        print(self.cds_data.ds)
         
         # Extract DataArray from Dataset for the specified time index
         data_array = self.cds_data.ds[self.cds_data.variable_short_name].isel(time=0)  # Extracting DataArray for the first time step

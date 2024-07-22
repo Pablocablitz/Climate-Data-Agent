@@ -3,7 +3,8 @@ from cda_classes.prompt_manager import PromptManager
 from data_handler.data_handler import DataHandler
 from cda_classes.eorequest import EORequest
 from cda_classes.visualisation_handler import VisualisationHandler
-import jsonpickle
+import streamlit as st
+
 
 class Chatbot():
     def __init__(self):
@@ -43,24 +44,33 @@ class Chatbot():
         # Step 4 - get specific product name
         self.prompt_manager.specific_product_list = self.request.construct_product_agent_instruction()
         self.request.specific_product = self.prompt_manager.retrieve_information("specific_product_agent", user_prompt)
-        print(self.prompt_manager.specific_product_list)
+
         # Step 5 - get analysis type
         self.request.analysis = self.prompt_manager.retrieve_information("analysis_agent", user_prompt)
 
         # Step 6 - get visualisation type
         self.request.visualisation = self.prompt_manager.retrieve_information("visualisation_agent", user_prompt)        
         
-        self.requests.append(self.request)
+    def callback_user(self, user_prompt):
+        if (self.request.request_valid):
+            self.prompt_manager.conversation_assistant_to_user("review_agent", user_prompt, self.request.main_properties)
+            with st.chat_message("assistant"):
+                st.write(self.prompt_manager.callback)
+                st.session_state.messages.append({"role": "assistant", "content": self.prompt_manager.callback})
+            pass    
+        else:
+            with st.chat_message("assistant"):
+                self.prompt_manager.conversation_assistant_to_user("missing_info_agent", user_prompt, self.request.errors)
+                st.write(self.prompt_manager.callback)
+                st.session_state.messages.append({"role": "assistant", "content": self.prompt_manager.callback})
+                st.stop()
 
     def process_request(self, user_prompt): 
         self.extract_information(user_prompt)
-        print(self.request.check_validity_of_request())
+        self.request.check_validity_of_request()
         # data download, data processing, analysis...
         
-        if (self.request.request_valid):
-            pass    
-        else:
-            print("this is a dummy for a future callback")
+        self.callback_user(user_prompt)
         
         self.data_handler.construct_request(self.request)
         self.data_handler.download("ERA5")
@@ -68,6 +78,13 @@ class Chatbot():
         # self.vis_handler.visualise_data(self.data_handler)
         self.vis_handler.visualise_data(self.data_handler)
         
+        with st.chat_message("assistant"):
+            # st.write(response)
+            if self.vis_handler.output_path:
+                st.video(self.vis_handler.output_path)
+        
+        st.session_state.messages.append({"role": "assistant","video": self.vis_handler.output_path})
+
     def output_results(self):
         pass
 

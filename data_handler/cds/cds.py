@@ -8,7 +8,7 @@ import xarray as xr
 import numpy as np
 
 
-api_key = "YOUR_GOOGLE_API_KEY"
+api_key = "AIzaSyD7S9rejpC8AQJcV4fzN5NKRncGncdrs8U"
 
 class ClimateDataStorageHandler():
     def __init__(self):
@@ -36,10 +36,10 @@ class ClimateDataStorageHandler():
         self.cds_request_format["year"] = self.years
         self.cds_request_format["area"] = self.adjusted_bounding_box
         self.datatype = self.cds_request_format["format"]
+        
     def get_data(self):
         request = self.cds_request_format
         name = self.request_format["cds_request"]["name"]
-        print(request, name)
         self.result = self.client.retrieve(name, request)
     
     def download(self, filename):
