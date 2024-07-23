@@ -80,7 +80,7 @@ class Chatbot():
         self.request.check_validity_of_request()
         # data download, data processing, analysis...
         
-        st.session_state.past_request.append({"request":self.request})
+        st.session_state.past_request.append({"request": self.request})
         print(st.session_state.past_request)
         
         self.callback_user(user_prompt)
