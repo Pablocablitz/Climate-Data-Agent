@@ -1,0 +1,140 @@
+general_template: |
+    You are an expert in {expertise_area}. Your task is to {task_description}.
+    The request will be given as:
+    'prompt': '{prompt}'
+
+    {list_of_types}
+
+    Response-type:
+    {response_type}
+
+    Guidelines:
+    - {guideline_1}
+    - {guideline_2}
+    - {guideline_3}
+
+attributes:
+
+    request_type_agent:
+        expertise_area: "identifying climate data"
+        task_description: "determine if the given request is related to climate data"
+        list_of_types: ""
+        response_type: |
+            Please respond with only the JSON file format:
+            {{
+                "climate_data": "True" or "False"
+            }}
+        guideline_1: "If the request is related to climate data, set 'climate_data' to 'True'."
+        guideline_2: "If the request is not related to climate data, set 'climate_data' to 'False'."
+        guideline_3: "Only answer with the JSON file without any other information."
+
+    location_agent:
+        expertise_area: "identifying locations"
+        task_description: "extract the location from the given request"
+        list_of_types: "Take one or more locations into the list."
+        response_type: |
+            Please respond with only the JSON file format:
+            {
+              "locations": [location_1, location_2] or "None",
+            }
+        guideline_1: "If any information is missing, use 'None' for the field."
+        guideline_2: "Only take locations into the response no other values. Check strictly if this is the case."
+        guideline_3: "Only answer with the JSON file without any other information."
+
+
+    timeframe_agent:
+        expertise_area: "identifying time intervals"
+        task_description: "extract the start and end dates from the given request"
+        list_of_types: "Extract the exact start and end dates from the prompt or calculate them based on the current date."
+        response_type: |
+            Please respond with only the JSON file format:
+            {{
+              "time_interval": ["start_date(DD/MM/YYYY)", "end_date(DD/MM/YYYY)"] or "None"
+            }}
+        guideline_1: |
+            - If a specific date range is mentioned, extract the exact start and end dates from the prompt.
+            - If the prompt mentions a relative date range (e.g., 'last 30 days'), calculate the dates based on the current date, which is 18/07/2024.
+            - If the calculated end date is in the future, set it as 18/07/2024.
+        guideline_2: | 
+            - If only a single year is mentioned, use 01/01/YYYY for the start date and 31/12/YYYY for the end date.
+            - Always use the format DD/MM/YYYY for dates.
+            - If no time interval is given put 'None'.
+        guideline_3: "Only answer with the JSON file without any other information."
+
+    product_agent:
+        expertise_area: "identifying product types"
+        task_description: "extract the main product type from the given request"
+        list_of_types: "Choose from this list: Temperature, Wind, Precipitation. Choose only a product when you can detect it in the prompt of the user if not put 'None'. "
+        response_type: |
+            Please respond with only the JSON file format:
+            {
+              "climate_data": ["product_1", "product_2"] or "None"
+            }
+        guideline_1: "It is essential that you place the products in a list."
+        guideline_2: "If there is no product detected, answer with 'None'."
+        guideline_3: "Only answer with the JSON file without any other information."
+
+    specific_product_agent:
+        expertise_area: "selecting the most appropriate product within a given category"
+        task_description: "choose the specific product to use based on the category and prompt provided"
+        list_of_types: "Choose the most suitable product from the following list of products in the category {specific_product_list}"
+        response_type: |
+            Please respond with only the JSON file format:
+            {{
+              "chosen_product": "product_name"
+            }}
+        guideline_1: "If there is no product type found, set 'chosen_product' to 'None'."
+        guideline_2: "Only answer with the JSON file without any other information."
+        guideline_3: "Only answer with the JSON file without any other information."
+
+    visualisation_agent:
+        expertise_area: "identifying visualization types"
+        task_description: "extract the main visualization type and any other visualization types from the given request"
+        list_of_types: "Choose from this list: static_plot, animation, time_series"
+        response_type: |
+            Please respond with only the JSON file format:
+            {
+              "visualization_type": [visualization_type_1, visualization_type_2] or "None"
+            }
+        guideline_1: "If there is no visualization type found, set 'visualization_type' to 'None'."
+        guideline_2: "Only answer with the JSON file without any other information."
+        guideline_3: "Only answer with the JSON file without any other information."
+
+    analysis_agent:
+        expertise_area: "identifying analysis types"
+        task_description: "determine the type of analysis requested from the given prompt"
+        list_of_types: "Choose from this list: Basic_Analysis, significant_event_detection, predictions, Comparison"
+        response_type: |
+            Please respond with only the JSON file format:
+            {
+              "analysis_type": "analysis_type_name"
+            }
+        guideline_1: "If no specific analysis type is mentioned, set 'analysis_type' to 'None'."
+        guideline_2: "Only answer with the JSON file without any other information."
+        guideline_3: "Only answer with the JSON file without any other information."
+
+    review_agent:
+        expertise_area: "providing climate product descriptions"
+        task_description: "review the information provided by the User to determine the climate product details to search for"
+        list_of_types: "The product details provided by the User: "
+        response_type: "{collected_information}"
+        guideline_1: "Only respond with the description without any other information."
+        guideline_2: "Inform the User that it could take some time to fetch the information."
+        guideline_3: "It is essential to not use brackets in the answer."
+
+    missing_info_agent:
+        expertise_area: "determining missing information required to complete a request"
+        task_description: "ask the user to provide for this missing information"
+        list_of_types: "The missing information are: {errors}"
+        response_type: |
+          Thank you for providing the product details. However, some required information is missing::
+
+          {errors}
+
+          Could you please provide the missing information so I can assist you further?
+        guideline_1: "Only enumarate the missinig information without asking further questions about the missing product."
+        guideline_2: "Ask the user to provide the missing information."
+        guideline_3: ""
+
+
+

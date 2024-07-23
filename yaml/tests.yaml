@@ -1,0 +1,16 @@
+# TODO: FILL THIS OUT. THIS IS MERELY A DUMMY!
+tests:
+  test1: {
+    user_prompt: "Yes hello can I have the temperature data for Zimbabwe in 2020?",
+    expected_response: {
+      product_type: "temperature",
+      timeframe: "2020-2020"
+    }
+  },
+  test2: {
+    user_prompt: "How's the rainfall around the bavaria area been in the last year?",
+    expected_response: {
+      product_type: "rainfall",
+      timeframe: "2024-2024"
+    }
+  }

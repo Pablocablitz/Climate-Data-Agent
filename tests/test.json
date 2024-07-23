@@ -1,0 +1,606 @@
+{
+    "py/object": "data_handler.data_handler.DataHandler",
+    "request_cds": {
+        "py/object": "data_handler.cds.cds.ClimateDataStorageHandler",
+        "client": {
+            "py/object": "cdsapi.api.Client",
+            "url": "https://cds.climate.copernicus.eu/api/v2",
+            "key": "316703:72c37d12-5b07-43bf-bbb3-0a0cafbc7a4f",
+            "quiet": false,
+            "progress": true,
+            "verify": true,
+            "timeout": 60,
+            "sleep_max": 120,
+            "retry_max": 500,
+            "full_stack": false,
+            "delete": true,
+            "last_state": "completed",
+            "wait_until_complete": true,
+            "debug_callback": null,
+            "warning_callback": null,
+            "info_callback": null,
+            "error_callback": null,
+            "session": {
+                "py/object": "requests.sessions.Session",
+                "py/state": {
+                    "headers": {
+                        "User-Agent": "cdsapi/0.7.0"
+                    },
+                    "cookies": {
+                        "py/object": "requests.cookies.RequestsCookieJar",
+                        "py/state": {
+                            "_policy": {
+                                "py/object": "http.cookiejar.DefaultCookiePolicy",
+                                "netscape": true,
+                                "rfc2965": false,
+                                "rfc2109_as_netscape": null,
+                                "hide_cookie2": false,
+                                "strict_domain": false,
+                                "strict_rfc2965_unverifiable": true,
+                                "strict_ns_unverifiable": false,
+                                "strict_ns_domain": 0,
+                                "strict_ns_set_initial_dollar": false,
+                                "strict_ns_set_path": false,
+                                "secure_protocols": {
+                                    "py/tuple": [
+                                        "https",
+                                        "wss"
+                                    ]
+                                },
+                                "_blocked_domains": {
+                                    "py/tuple": []
+                                },
+                                "_allowed_domains": null,
+                                "_now": 1721400585
+                            },
+                            "_cookies": {},
+                            "_now": 1721400585
+                        }
+                    },
+                    "auth": {
+                        "py/tuple": [
+                            "316703",
+                            "72c37d12-5b07-43bf-bbb3-0a0cafbc7a4f"
+                        ]
+                    },
+                    "proxies": {},
+                    "hooks": {
+                        "response": []
+                    },
+                    "params": {},
+                    "verify": true,
+                    "cert": null,
+                    "adapters": {
+                        "py/reduce": [
+                            {
+                                "py/type": "collections.OrderedDict"
+                            },
+                            {
+                                "py/tuple": []
+                            },
+                            null,
+                            null,
+                            {
+                                "py/tuple": [
+                                    {
+                                        "py/tuple": [
+                                            "https://",
+                                            {
+                                                "py/object": "requests.adapters.HTTPAdapter",
+                                                "py/state": {
+                                                    "max_retries": {
+                                                        "py/object": "urllib3.util.retry.Retry",
+                                                        "total": 0,
+                                                        "connect": null,
+                                                        "read": false,
+                                                        "status": null,
+                                                        "other": null,
+                                                        "redirect": null,
+                                                        "status_forcelist": {
+                                                            "py/set": []
+                                                        },
+                                                        "allowed_methods": {
+                                                            "py/reduce": [
+                                                                {
+                                                                    "py/type": "builtins.frozenset"
+                                                                },
+                                                                {
+                                                                    "py/tuple": [
+                                                                        [
+                                                                            "DELETE",
+                                                                            "PUT",
+                                                                            "OPTIONS",
+                                                                            "GET",
+                                                                            "HEAD",
+                                                                            "TRACE"
+                                                                        ]
+                                                                    ]
+                                                                }
+                                                            ]
+                                                        },
+                                                        "backoff_factor": 0,
+                                                        "backoff_max": 120,
+                                                        "raise_on_redirect": true,
+                                                        "raise_on_status": true,
+                                                        "history": {
+                                                            "py/tuple": []
+                                                        },
+                                                        "respect_retry_after_header": true,
+                                                        "remove_headers_on_redirect": {
+                                                            "py/reduce": [
+                                                                {
+                                                                    "py/type": "builtins.frozenset"
+                                                                },
+                                                                {
+                                                                    "py/tuple": [
+                                                                        [
+                                                                            "authorization",
+                                                                            "cookie"
+                                                                        ]
+                                                                    ]
+                                                                }
+                                                            ]
+                                                        },
+                                                        "backoff_jitter": 0.0
+                                                    },
+                                                    "config": {},
+                                                    "_pool_connections": 10,
+                                                    "_pool_maxsize": 10,
+                                                    "_pool_block": false
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "py/tuple": [
+                                            "http://",
+                                            {
+                                                "py/object": "requests.adapters.HTTPAdapter",
+                                                "py/state": {
+                                                    "max_retries": {
+                                                        "py/object": "urllib3.util.retry.Retry",
+                                                        "total": 0,
+                                                        "connect": null,
+                                                        "read": false,
+                                                        "status": null,
+                                                        "other": null,
+                                                        "redirect": null,
+                                                        "status_forcelist": {
+                                                            "py/set": []
+                                                        },
+                                                        "allowed_methods": {
+                                                            "py/id": 18
+                                                        },
+                                                        "backoff_factor": 0,
+                                                        "backoff_max": 120,
+                                                        "raise_on_redirect": true,
+                                                        "raise_on_status": true,
+                                                        "history": {
+                                                            "py/tuple": []
+                                                        },
+                                                        "respect_retry_after_header": true,
+                                                        "remove_headers_on_redirect": {
+                                                            "py/reduce": [
+                                                                {
+                                                                    "py/type": "builtins.frozenset"
+                                                                },
+                                                                {
+                                                                    "py/tuple": [
+                                                                        [
+                                                                            "authorization",
+                                                                            "cookie"
+                                                                        ]
+                                                                    ]
+                                                                }
+                                                            ]
+                                                        },
+                                                        "backoff_jitter": 0.0
+                                                    },
+                                                    "config": {},
+                                                    "_pool_connections": 10,
+                                                    "_pool_maxsize": 10,
+                                                    "_pool_block": false
+                                                }
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "stream": false,
+                    "trust_env": true,
+                    "max_redirects": 30
+                }
+            },
+            "metadata": null,
+            "forget": false
+        },
+        "request_format": {
+            "cds_request": {
+                "name": "reanalysis-era5-land-monthly-means",
+                "request": {
+                    "variable": "2m_temperature",
+                    "product_type": "monthly_averaged_reanalysis",
+                    "year": [
+                        "2012"
+                    ],
+                    "month": [
+                        "01",
+                        "02",
+                        "03",
+                        "04",
+                        "05",
+                        "06",
+                        "07",
+                        "08",
+                        "09",
+                        "10",
+                        "11",
+                        "12"
+                    ],
+                    "time": [
+                        "00:00"
+                    ],
+                    "area": [
+                        53.16,
+                        6.54,
+                        43.16,
+                        16.54
+                    ],
+                    "format": "netcdf"
+                }
+            }
+        },
+        "years": {
+            "py/id": 32
+        },
+        "cds_request_format": {
+            "py/id": 31
+        },
+        "location": [
+            "Munich"
+        ],
+        "timeframe": [
+            "01/01/2012",
+            "31/12/2012"
+        ],
+        "product": [
+            "Temperature"
+        ],
+        "specific_product": "2m temperature",
+        "variables": {
+            "Temperature": [
+                {
+                    "name": "2m temperature",
+                    "description": "Temperature at 2 meters above the surface, crucial for climate and weather studies.",
+                    "variable_name": "2m_temperature",
+                    "short_name": "t2m",
+                    "units": "\u00b0C",
+                    "cmap": "coolwarm"
+                },
+                {
+                    "name": "Skin temperature",
+                    "description": "Temperature of the Earth's surface, relevant for climate monitoring.",
+                    "variable_name": "skin_temperature",
+                    "units": "\u00b0C",
+                    "short_name": "skt",
+                    "cmap": "coolwarm"
+                }
+            ],
+            "Precipitation": [
+                {
+                    "name": "Total precipitation",
+                    "description": "Sum of all types of precipitation, key for climate and hydrological studies.",
+                    "variable_name": "total_precipitation",
+                    "units": "mm",
+                    "short_name": "tp",
+                    "cmap": "Blues"
+                }
+            ],
+            "Wind": [
+                {
+                    "name": "10m wind speed",
+                    "description": "East-west component of wind at 10 meters above the surface, relevant for general wind studies.",
+                    "variable_name": "10m_u_component_of_wind, 10m_v_component_of_wind",
+                    "units": "m/s",
+                    "short_name": "w10",
+                    "cmap": "viridis"
+                }
+            ],
+            "Radiation": [
+                {
+                    "name": "Surface net solar radiation",
+                    "description": "Net solar radiation at the surface, crucial for energy balance studies.",
+                    "variable_name": "surface_net_solar_radiation",
+                    "units": "J/m^2",
+                    "short_name": "ssr"
+                },
+                {
+                    "name": "Surface net thermal radiation",
+                    "description": "Net thermal radiation at the surface, important for energy balance studies.",
+                    "variable_name": "surface_net_thermal_radiation",
+                    "units": "J/m^2",
+                    "short_name": "str"
+                },
+                {
+                    "name": "Surface solar radiation downwards",
+                    "description": "Downward solar radiation at the surface, crucial for energy balance studies.",
+                    "variable_name": "surface_solar_radiation_downwards",
+                    "units": "J/m^2",
+                    "short_name": "ssrd"
+                },
+                {
+                    "name": "Surface thermal radiation downwards",
+                    "description": "Downward thermal radiation at the surface, important for energy balance studies.",
+                    "variable_name": "surface_thermal_radiation_downwards",
+                    "units": "J/m^2",
+                    "short_name": "strd"
+                }
+            ],
+            "Vegetation": [
+                {
+                    "name": "Leaf area index, high vegetation",
+                    "description": "Area of leaves per unit ground area for high vegetation.",
+                    "variable_name": "leaf_area_index_high_vegetation",
+                    "units": "m^2/m^2",
+                    "short_name": "tvh"
+                },
+                {
+                    "name": "Leaf area index, low vegetation",
+                    "description": "Area of leaves per unit ground area for low vegetation.",
+                    "variable_name": "leaf_area_index_low_vegetation",
+                    "units": "m^2/m^2",
+                    "short_name": "tvl"
+                }
+            ]
+        },
+        "original_bounding_box": {
+            "north": 48.25,
+            "south": 48.06,
+            "east": 11.72,
+            "west": 11.36
+        },
+        "adjusted_bounding_box": {
+            "py/id": 35
+        },
+        "variable": "2m_temperature",
+        "datatype": "netcdf",
+        "result": {
+            "py/object": "cdsapi.api.Result",
+            "reply": {
+                "state": "completed",
+                "request_id": "26fd39f6-4940-414a-8397-7ad7ca10abf7",
+                "location": "https://download-0009-clone.copernicus-climate.eu/cache-compute-0009/cache/data4/adaptor.mars.internal-1721400574.6923327-21215-9-26fd39f6-4940-414a-8397-7ad7ca10abf7.nc",
+                "content_length": 246748,
+                "content_type": "application/x-netcdf",
+                "sent_to_rmq_at": "2024-07-19T14:49:17.451Z",
+                "specific_metadata_json": {
+                    "top_request_origin": "api"
+                }
+            },
+            "_url": "https://cds.climate.copernicus.eu/api/v2",
+            "session": {
+                "py/id": 3
+            },
+            "verify": true,
+            "cleanup": true,
+            "sleep_max": 120,
+            "retry_max": 500,
+            "timeout": 60,
+            "progress": true,
+            "_deleted": false
+        },
+        "filename": "ERA5.netcdf",
+        "variable_names": [
+            "t2m"
+        ],
+        "ds": {
+            "py/object": "xarray.core.dataset.Dataset",
+            "_attrs": {
+                "Conventions": "CF-1.6",
+                "history": "2024-07-19 14:49:34 GMT by grib_to_netcdf-2.28.1: /opt/ecmwf/mars-client/bin/grib_to_netcdf -S param -o /cache/data4/adaptor.mars.internal-1721400574.6923327-21215-9-26fd39f6-4940-414a-8397-7ad7ca10abf7.nc /cache/tmp/26fd39f6-4940-414a-8397-7ad7ca10abf7-adaptor.mars.internal-1721400557.6010876-21215-8-tmp.grib"
+            },
+            "_coord_names": {
+                "py/set": [
+                    "latitude",
+                    "time",
+                    "longitude"
+                ]
+            },
+            "_dims": {
+                "longitude": 101,
+                "latitude": 101,
+                "time": 12
+            },
+            "_encoding": {
+                "unlimited_dims": {
+                    "py/set": []
+                },
+                "source": "/home/eouser/programming/Climate-Data-Agent/ERA5.netcdf"
+            },
+            "_indexes": {
+                "longitude": {
+                    "py/object": "xarray.core.indexes.PandasIndex"
+                },
+                "latitude": {
+                    "py/object": "xarray.core.indexes.PandasIndex"
+                },
+                "time": {
+                    "py/object": "xarray.core.indexes.PandasIndex"
+                }
+            },
+            "_variables": {
+                "longitude": {
+                    "py/object": "xarray.core.variable.IndexVariable",
+                    "_dims": {
+                        "py/tuple": [
+                            "longitude"
+                        ]
+                    },
+                    "_data": {
+                        "py/id": 70
+                    },
+                    "_attrs": {
+                        "py/id": 77
+                    },
+                    "_encoding": {
+                        "dtype": {
+                            "py/id": 73
+                        },
+                        "source": "/home/eouser/programming/Climate-Data-Agent/ERA5.netcdf",
+                        "original_shape": {
+                            "py/tuple": [
+                                101
+                            ]
+                        }
+                    }
+                },
+                "latitude": {
+                    "py/object": "xarray.core.variable.IndexVariable",
+                    "_dims": {
+                        "py/tuple": [
+                            "latitude"
+                        ]
+                    },
+                    "_data": {
+                        "py/id": 80
+                    },
+                    "_attrs": {
+                        "py/id": 86
+                    },
+                    "_encoding": {
+                        "dtype": {
+                            "py/id": 73
+                        },
+                        "source": "/home/eouser/programming/Climate-Data-Agent/ERA5.netcdf",
+                        "original_shape": {
+                            "py/tuple": [
+                                101
+                            ]
+                        }
+                    }
+                },
+                "time": {
+                    "py/object": "xarray.core.variable.IndexVariable",
+                    "_dims": {
+                        "py/tuple": [
+                            "time"
+                        ]
+                    },
+                    "_data": {
+                        "py/id": 89
+                    },
+                    "_attrs": {
+                        "py/id": 102
+                    },
+                    "_encoding": {
+                        "dtype": {
+                            "py/reduce": [
+                                {
+                                    "py/type": "numpy.dtype"
+                                },
+                                {
+                                    "py/tuple": [
+                                        "i4",
+                                        false,
+                                        true
+                                    ]
+                                },
+                                {
+                                    "py/tuple": [
+                                        3,
+                                        "<",
+                                        null,
+                                        null,
+                                        null,
+                                        -1,
+                                        -1,
+                                        0
+                                    ]
+                                }
+                            ]
+                        },
+                        "source": "/home/eouser/programming/Climate-Data-Agent/ERA5.netcdf",
+                        "original_shape": {
+                            "py/tuple": [
+                                12
+                            ]
+                        },
+                        "units": "hours since 1900-01-01 00:00:00.0",
+                        "calendar": "gregorian"
+                    }
+                },
+                "t2m": {
+                    "py/object": "xarray.core.variable.Variable",
+                    "_dims": {
+                        "py/tuple": [
+                            "time",
+                            "latitude",
+                            "longitude"
+                        ]
+                    },
+                    "_data": {
+                        "py/id": 106
+                    },
+                    "_attrs": {
+                        "py/id": 138
+                    },
+                    "_encoding": {
+                        "dtype": {
+                            "py/id": 119
+                        },
+                        "source": "/home/eouser/programming/Climate-Data-Agent/ERA5.netcdf",
+                        "original_shape": {
+                            "py/tuple": [
+                                12,
+                                101,
+                                101
+                            ]
+                        },
+                        "missing_value": {
+                            "py/reduce": [
+                                {
+                                    "py/function": "numpy.core.multiarray.scalar"
+                                },
+                                {
+                                    "py/tuple": [
+                                        {
+                                            "py/id": 119
+                                        },
+                                        {
+                                            "py/b64": "AYA="
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        "_FillValue": {
+                            "py/reduce": [
+                                {
+                                    "py/function": "numpy.core.multiarray.scalar"
+                                },
+                                {
+                                    "py/tuple": [
+                                        {
+                                            "py/id": 119
+                                        },
+                                        {
+                                            "py/b64": "AYA="
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        "scale_factor": {
+                            "py/id": 130
+                        },
+                        "add_offset": {
+                            "py/id": 132
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
