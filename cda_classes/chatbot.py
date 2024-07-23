@@ -16,7 +16,6 @@ class Chatbot():
         # Can then append current requests to self.request when all requests have been processed...
         # May want to move this history functionality into a separate file (some type of logging package/module)
         # Or do it in the main, since only the main knows when a request is completed
-        self.requests = []
         self.request = EORequest()
 
     def display_string_to_user(response):
@@ -50,25 +49,39 @@ class Chatbot():
 
         # Step 6 - get visualisation type
         self.request.visualisation = self.prompt_manager.retrieve_information("visualisation_agent", user_prompt)        
-        
+
+
+     # setting message block for assistant in the case of callback to user 
+     
     def callback_user(self, user_prompt):
         if (self.request.request_valid):
-            self.prompt_manager.conversation_assistant_to_user("review_agent", user_prompt, self.request.main_properties)
+            self.prompt_manager.callback_assistant_to_user("review_agent", user_prompt, self.request.main_properties)
             with st.chat_message("assistant"):
                 st.write(self.prompt_manager.callback)
                 st.session_state.messages.append({"role": "assistant", "content": self.prompt_manager.callback})
             pass    
         else:
             with st.chat_message("assistant"):
-                self.prompt_manager.conversation_assistant_to_user("missing_info_agent", user_prompt, self.request.errors)
+                self.prompt_manager.callback_assistant_to_user("missing_info_agent", user_prompt, self.request.errors)
                 st.write(self.prompt_manager.callback)
                 st.session_state.messages.append({"role": "assistant", "content": self.prompt_manager.callback})
                 st.stop()
 
     def process_request(self, user_prompt): 
+        
         self.extract_information(user_prompt)
+        if self.request.request_type == "False":
+            with st.chat_message("assistant"):
+                non_climate_data = "Thanks for your request. However there is no climate context. Please provide more accurate information."
+                st.write(non_climate_data)
+                st.session_state.messages.append({"role": "assistant", "content": non_climate_data})
+                st.stop()
+                
         self.request.check_validity_of_request()
         # data download, data processing, analysis...
+        
+        st.session_state.past_request.append({"request":self.request})
+        print(st.session_state.past_request)
         
         self.callback_user(user_prompt)
         

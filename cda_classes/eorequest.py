@@ -1,6 +1,7 @@
 from utils.utils import Utilities
 import googlemaps
 from collections.abc import Iterable
+import streamlit as st
 
 
 class EORequest():
@@ -23,7 +24,6 @@ class EORequest():
         properties = vars(self)
 
         self.main_properties = {key: value for key, value in properties.items() if not key.startswith("_")}
-        
         for key, value in self.main_properties.items():
             if isinstance(value, Iterable) and not isinstance(value, str):
                 for subvalue in value:
@@ -39,11 +39,16 @@ class EORequest():
                     print("checking validity of property: " + str(value))
                     self.errors.append(f"{key}")
 
-        print(self.errors)
+    # def check_history(self):
+    #     st.session_state.messages.append({"role": "user", "validity": self.request_valid})
+    #     messages = st.session_state.messages
+    #     if len(messages) >= 2 and messages["validity"][-2]:
+    #         with st.chat_message(messages["validity"][-2]):
+    #             if messages.get("validity"):
+    #                 print(message)
+                
 
-
-
-
+    
     def process_request(self, requests):
        pass
 
@@ -56,5 +61,3 @@ class EORequest():
     
     def load_variables(self):
         self.variables = Utilities.load_config_file("yaml/variables.yaml") 
-        
-

@@ -5,14 +5,17 @@ import jsonpickle
 class EOChatBot():
     def __init__(self):
         # Init stuff
-
+        self.i = 0
         self.chatbot = Chatbot()
 
     def run(self):
-        print(st.session_state)
+        self.i = self.i +1
+        print(self.i)
         # streamlit chatbot interface with chat history
         if "messages" not in st.session_state:
             st.session_state.messages = []
+        if "request" not in st.session_state:
+            st.session_state.past_request = []
         for message in st.session_state.messages:
             with st.chat_message(message["role"]):
                 if message.get("content"):

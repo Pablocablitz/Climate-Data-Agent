@@ -7,7 +7,7 @@ class PromptManager():
         self.llm_handler = llm_handler
         self.__load_agents()
         self.specific_product_list = None
-        self.requests = None
+        self.request = None
         pass
     
     def retrieve_information(self, agent_type, user_prompt):
@@ -18,9 +18,10 @@ class PromptManager():
         dict_key = next(iter(cleaned_information)) 
         dict_value = cleaned_information[dict_key]
         return dict_value
-
-    def conversation_assistant_to_user(self, agent_type, user_prompt, requests):
-        self.requests = requests
+    
+    # creating Callback to user before pulling request or notify of missing information
+    def callback_assistant_to_user(self, agent_type, user_prompt, request):
+        self.request = request
         system_prompt = self.construct_system_prompt(agent_type, user_prompt)
         self.callback = self.llm_handler.generate_response(system_prompt)
         
@@ -54,14 +55,14 @@ class PromptManager():
         if agent_type == "review_agent":
             system_prompt = system_prompt.format(
                 collected_information=(
-                    f"I will search for the climate product for {self.requests['location']} "
-                    f"covers the period {self.requests['timeframe']}. "
-                    f"The primary focus is on the category '{self.requests['product']}', "
-                    f"specifically looking at the variable '{self.requests['specific_product']}'."
+                    f"I will search for the climate product for {self.request['location']} "
+                    f"covering the period {self.request['timeframe']}. "
+                    f"The primary focus is on the category '{self.request['product']}', "
+                    f"specifically looking at the variable '{self.request['specific_product']}'."
                 )
             )
         if agent_type == "missing_info_agent":
-            formatted_string = '\n'.join(f"- {item}" for item in self.requests)
+            formatted_string = '\n'.join(f"- {item}" for item in self.request)
             system_prompt = system_prompt.format(errors = f"{formatted_string}")
 
         return system_prompt
