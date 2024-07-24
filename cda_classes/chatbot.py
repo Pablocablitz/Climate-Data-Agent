@@ -5,10 +5,14 @@ from cda_classes.eorequest import EORequest
 from cda_classes.visualisation_handler import VisualisationHandler
 import streamlit as st
 
+@st.cache_resource    
+def load_llm():
+    llm = LargeLanguageModelProcessor()
+    return llm
 
 class Chatbot():
     def __init__(self):
-        self.llama3 = LargeLanguageModelProcessor()
+        self.llama3 = load_llm()
         self.prompt_manager = PromptManager(self.llama3)
         self.data_handler = DataHandler()
         self.vis_handler = VisualisationHandler()
@@ -17,6 +21,7 @@ class Chatbot():
         # May want to move this history functionality into a separate file (some type of logging package/module)
         # Or do it in the main, since only the main knows when a request is completed
         self.request = EORequest()
+        
 
     def display_string_to_user(response):
         #Something something streamlit
@@ -80,16 +85,22 @@ class Chatbot():
         self.request.check_validity_of_request()
         # data download, data processing, analysis...
         
+        print(len(st.session_state.past_request))
         st.session_state.past_request.append({"request": self.request})
-        print(st.session_state.past_request)
+        
+        print(len(st.session_state.past_request))
+        if len(st.session_state.past_request)>=2:
+            location = st.session_state.past_request[-2]["request"].location
+            print(f"{location}, your location")
         
         self.callback_user(user_prompt)
         
-        self.data_handler.construct_request(self.request)
-        self.data_handler.download("ERA5")
+        with st.spinner("Downloading Data..."):
+            self.data_handler.construct_request(self.request)
+            self.data_handler.download("ERA5")
         
-        # self.vis_handler.visualise_data(self.data_handler)
-        self.vis_handler.visualise_data(self.data_handler)
+            # self.vis_handler.visualise_data(self.data_handler)
+            self.vis_handler.visualise_data(self.data_handler)
         
         with st.chat_message("assistant"):
             # st.write(response)
