@@ -14,6 +14,9 @@ class EORequest():
         self.analysis = None
         self.visualisation = None
         self.request_valid = False
+        self.variables = None
+        self.load_variables()
+        
         ## and more stuff...initialize as None I guess
 
     def check_validity_of_request(self):
@@ -54,7 +57,7 @@ class EORequest():
 
     def construct_product_agent_instruction(self):
         self.load_variables()
-        product_list = [product['name'] for product in self.variables.get(self.product[0], [])]
+        product_list = [product['name'] for product in self.variables.get(self.product[0])]
         print(product_list)
         instruction_format = f"'{self.product[0]}':\n- {product_list}"
         return instruction_format

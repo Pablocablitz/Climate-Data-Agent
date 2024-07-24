@@ -4,6 +4,7 @@ from data_handler.data_handler import DataHandler
 from cda_classes.eorequest import EORequest
 from cda_classes.visualisation_handler import VisualisationHandler
 import streamlit as st
+import jsonpickle
 
 @st.cache_resource    
 def load_llm():
@@ -21,7 +22,6 @@ class Chatbot():
         # May want to move this history functionality into a separate file (some type of logging package/module)
         # Or do it in the main, since only the main knows when a request is completed
         self.request = EORequest()
-        
 
     def display_string_to_user(response):
         #Something something streamlit
@@ -46,8 +46,9 @@ class Chatbot():
         self.request.product = self.prompt_manager.retrieve_information("product_agent", user_prompt)
         
         # Step 4 - get specific product name
-        self.prompt_manager.specific_product_list = self.request.construct_product_agent_instruction()
-        self.request.specific_product = self.prompt_manager.retrieve_information("specific_product_agent", user_prompt)
+        if self.request.product[0] != "None" and self.request.product[0] != None:
+            self.prompt_manager.specific_product_list = self.request.construct_product_agent_instruction()
+            self.request.specific_product = self.prompt_manager.retrieve_information("specific_product_agent", user_prompt)
 
         # Step 5 - get analysis type
         self.request.analysis = self.prompt_manager.retrieve_information("analysis_agent", user_prompt)
@@ -60,7 +61,7 @@ class Chatbot():
      
     def callback_user(self, user_prompt):
         if (self.request.request_valid):
-            self.prompt_manager.callback_assistant_to_user("review_agent", user_prompt, self.request.main_properties)
+            self.prompt_manager.callback_assistant_to_user("review_agent", user_prompt, self.request)
             with st.chat_message("assistant"):
                 st.write(self.prompt_manager.callback)
                 st.session_state.messages.append({"role": "assistant", "content": self.prompt_manager.callback})
@@ -75,24 +76,20 @@ class Chatbot():
     def process_request(self, user_prompt): 
         
         self.extract_information(user_prompt)
-        if self.request.request_type == "False":
-            with st.chat_message("assistant"):
-                non_climate_data = "Thanks for your request. However there is no climate context. Please provide more accurate information."
-                st.write(non_climate_data)
-                st.session_state.messages.append({"role": "assistant", "content": non_climate_data})
-                st.stop()
+
                 
         self.request.check_validity_of_request()
         # data download, data processing, analysis...
+        st.session_state.past_request.append(self.request)
         
-        print(len(st.session_state.past_request))
-        st.session_state.past_request.append({"request": self.request})
-        
-        print(len(st.session_state.past_request))
-        if len(st.session_state.past_request)>=2:
-            location = st.session_state.past_request[-2]["request"].location
-            print(f"{location}, your location")
-        
+        # check if the context is related to history or has no relation with climate at all 
+        if ((len(st.session_state.past_request) >= 2) and (not st.session_state.past_request[-2].request_valid)):
+            self.check_history()
+        elif self.request.request_type == "False":
+            self.check_climate_context()
+        else:
+            pass
+            
         self.callback_user(user_prompt)
         
         with st.spinner("Downloading Data..."):
@@ -111,5 +108,49 @@ class Chatbot():
 
     def output_results(self):
         pass
+    
+    def replace_last_entry(self):
+        if st.session_state.past_request:
+            st.session_state.past_request[-1] = self.past_request
+    
+    def check_history(self):
+            # Get the second-to-last request
+            self.past_request = st.session_state.past_request[-2]
 
+            # Print the initial state of past_request and self.request
+            print("Initial past_request:", self.past_request)
+            print("Initial self.request:", self.request)
 
+            # Check if the second-to-last request was invalid and has errors
+            if not self.past_request.request_valid and self.past_request.errors:
+                # Update the past request attributes based on the errors
+                for error in self.past_request.errors:
+                    # Check if the attribute exists in self.request
+                    if hasattr(self.request, error):
+                        # Retrieve the value from self.request
+                        value = getattr(self.request, error)
+                        # Set the value to past_request
+                        setattr(self.past_request, error, value)
+                        
+                        # Print the attribute and value being set
+                        print(f"Updating {error} in past_request to {value}")
+
+                # Print the updated state of past_request
+                print("Updated past_request:", self.past_request)
+
+                # Set the current request to be the updated past request
+                self.request = self.past_request
+
+                # Print the final state of self.request
+                print("Final self.request:", self.request)
+                self.request.request_valid = True
+                self.replace_last_entry()
+            else:
+                pass
+        
+    def check_climate_context(self):
+        with st.chat_message("assistant"):
+            non_climate_data = "Thanks for your request. However there is no climate context. Please provide more accurate information."
+            st.write(non_climate_data)
+            st.session_state.messages.append({"role": "assistant", "content": non_climate_data})
+            st.stop()     

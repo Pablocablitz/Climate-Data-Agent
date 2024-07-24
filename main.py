@@ -20,7 +20,7 @@ class EOChatBot():
         # streamlit chatbot interface with chat history
         if "messages" not in st.session_state:
             st.session_state.messages = []
-        if "request" not in st.session_state:
+        if 'past_request' not in st.session_state:
             st.session_state.past_request = []
             
         for message in st.session_state.messages:

@@ -12,6 +12,7 @@ general_template: |
     - {guideline_1}
     - {guideline_2}
     - {guideline_3}
+    - {guideline_4}
 
 attributes:
 
@@ -27,19 +28,21 @@ attributes:
         guideline_1: "If the request is related to climate data, set 'climate_data' to 'True'."
         guideline_2: "If the request is not related to climate data, set 'climate_data' to 'False'."
         guideline_3: "Only answer with the JSON file without any other information."
+        guideline_4: "If the prompt contains only numbers, such as years or dates, return 'None'."
 
     location_agent:
-        expertise_area: "identifying locations"
+        expertise_area: "identifying location"
         task_description: "extract the location from the given request"
-        list_of_types: "Take one or more locations into the list."
+        list_of_types: "Take one location into the list."
         response_type: |
             Please respond with only the JSON file format:
             {
-              "locations": [location_1, location_2] or "None",
+              "location": ["location_not_number"] or "None",
             }
         guideline_1: "If any information is missing, use 'None' for the field."
-        guideline_2: "Only take locations into the response no other values. Check strictly if this is the case."
+        guideline_2: "Only take strings as values no numbers like years or dates. Check strictly if this is the case."
         guideline_3: "Only answer with the JSON file without any other information."
+        guideline_4: "If the prompt contains only numbers, such as years or dates, return 'None'."
 
 
     timeframe_agent:
@@ -60,6 +63,7 @@ attributes:
             - Always use the format DD/MM/YYYY for dates.
             - If no time interval is given put 'None'.
         guideline_3: "Only answer with the JSON file without any other information."
+        guideline_4: ""
 
     product_agent:
         expertise_area: "identifying product types"
@@ -73,6 +77,7 @@ attributes:
         guideline_1: "It is essential that you place the products in a list."
         guideline_2: "If there is no product detected, answer with 'None'."
         guideline_3: "Only answer with the JSON file without any other information."
+        guideline_4: "If the prompt contains only numbers, such as years or dates, return 'None'."
 
     specific_product_agent:
         expertise_area: "selecting the most appropriate product within a given category"
@@ -86,6 +91,7 @@ attributes:
         guideline_1: "If there is no product type found, set 'chosen_product' to 'None'."
         guideline_2: "Only answer with the JSON file without any other information."
         guideline_3: "Only answer with the JSON file without any other information."
+        guideline_4: "If the prompt contains only numbers, such as years or dates, return 'None'."
 
     visualisation_agent:
         expertise_area: "identifying visualization types"
@@ -99,6 +105,7 @@ attributes:
         guideline_1: "If there is no visualization type found, set 'visualization_type' to 'None'."
         guideline_2: "Only answer with the JSON file without any other information."
         guideline_3: "Only answer with the JSON file without any other information."
+        guideline_4: "If the prompt contains only numbers, such as years or dates, return 'None'."
 
     analysis_agent:
         expertise_area: "identifying analysis types"
@@ -112,6 +119,7 @@ attributes:
         guideline_1: "If no specific analysis type is mentioned, set 'analysis_type' to 'None'."
         guideline_2: "Only answer with the JSON file without any other information."
         guideline_3: "Only answer with the JSON file without any other information."
+        guideline_4: "If the prompt contains only numbers, such as years or dates, return 'None'."
 
     review_agent:
         expertise_area: "providing climate product descriptions"
@@ -121,6 +129,8 @@ attributes:
         guideline_1: "Only respond with the description without any other information."
         guideline_2: "Inform the User that it could take some time to fetch the information."
         guideline_3: "It is essential to not use brackets in the answer."
+        guideline_4: ""
+        
 
     missing_info_agent:
         expertise_area: "determining missing information required to complete a request"
@@ -135,6 +145,7 @@ attributes:
         guideline_1: "Only enumarate the missinig information without asking further questions about the missing product."
         guideline_2: "Ask the user to provide the missing information."
         guideline_3: ""
+        guideline_4: ""
 
 
 
