@@ -6,6 +6,7 @@ from datetime import datetime
 from utils.utils import Utilities
 import xarray as xr
 import numpy as np
+import pathlib
 
 
 api_key = "AIzaSyD7S9rejpC8AQJcV4fzN5NKRncGncdrs8U"
@@ -181,5 +182,8 @@ class ClimateDataStorageHandler():
         self.years = sorted({str(year) for year in range(start_date.year, end_date.year + 1)})
         
     def load_request_format(self):
-        self.request_format = Utilities.load_config_file("/home/eouser/programming/Climate-Data-Agent/data_handler/request_format.yaml")
+        self.request_format = Utilities.load_config_file(
+            str(
+                pathlib.Path(__file__).absolute().parent) 
+                + "/../request_format.yaml")
         
