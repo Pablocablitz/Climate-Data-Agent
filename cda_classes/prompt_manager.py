@@ -5,6 +5,7 @@ from loguru import logger
 import jsonpickle 
 from cda_classes.llm_processor import LargeLanguageModelProcessor
 from cda_classes.analysis_handler import AnalysisHandler
+from cda_classes.eorequest import EORequest
 
 
 class PromptManager():
@@ -29,7 +30,7 @@ class PromptManager():
         return dict_value
     
     # creating Callback to user before pulling request or notify of missing information
-    def callback_assistant_to_user(self, agent_type, user_prompt, request):
+    def callback_assistant_to_user(self, agent_type, user_prompt, request: EORequest):
         self.request = request
         system_prompt = self.construct_system_prompt(agent_type, user_prompt)
         self.callback = self.llm_handler.generate_response(system_prompt)
@@ -63,14 +64,11 @@ class PromptManager():
         if agent_type == "specific_product_agent":
             system_prompt = system_prompt.format(specific_product_list = self.specific_product_list)
         elif agent_type == "review_agent":
-            system_prompt = system_prompt.format(
-                collected_information=(
-                    f"I will search for the climate product for {self.request.location} "
-                    f"covering the period {self.request.timeframe}. "
-                    f"The primary focus is on the category '{self.request.product}', "
-                    f"specifically looking at the variable '{self.request.specific_product}'."
-                )
-            )
+            system_prompt = f" \
+            I will search for the climate product for {self.request.request_location} \
+            covering the period {self.request.request_timeframe}. \
+            The primary focus is on the category '{self.request.request_product}', \
+            specifically looking at the variable '{self.request.request_specific_product}'."
         elif agent_type == "analysis_agent":
             temp_prompt = string.Template(system_prompt)
             system_prompt = temp_prompt.safe_substitute(

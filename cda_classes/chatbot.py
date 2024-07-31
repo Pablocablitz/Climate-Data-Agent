@@ -40,31 +40,31 @@ class Chatbot():
         self.request.request_type = self.prompt_manager.retrieve_information("request_type_agent", user_prompt)
         # Step 1 - get location
         
-        self.request.location = self.prompt_manager.retrieve_information("location_agent", user_prompt)
+        self.request.request_location = self.prompt_manager.retrieve_information("location_agent", user_prompt)
 
         # Step 2 - get time interval
-        self.request.timeframe = self.prompt_manager.retrieve_information("timeframe_agent", user_prompt)
+        self.request.request_timeframe = self.prompt_manager.retrieve_information("timeframe_agent", user_prompt)
 
         # Step 3 - get product type
-        self.request.product = self.prompt_manager.retrieve_information("product_agent", user_prompt)
+        self.request.request_product = self.prompt_manager.retrieve_information("product_agent", user_prompt)
         
         # Step 4 - get specific product name
-        if self.request.product[0] != "None" and self.request.product[0] != None:
+        if self.request.request_product[0] != "None" and self.request.request_product[0] != None:
             self.prompt_manager.specific_product_list = self.request.construct_product_agent_instruction()
-            self.request.specific_product = self.prompt_manager.retrieve_information("specific_product_agent", user_prompt)
+            self.request.request_specific_product = self.prompt_manager.retrieve_information("specific_product_agent", user_prompt)
 
         # Step 5 - get analysis type
-        self.request.analysis = self.prompt_manager.retrieve_information("analysis_agent", user_prompt)
+        self.request.request_analysis = self.prompt_manager.retrieve_information("analysis_agent", user_prompt)
 
         # Step 6 - get visualisation type
-        self.request.visualisation = self.prompt_manager.retrieve_information("visualisation_agent", user_prompt)        
+        self.request.request_visualisation = self.prompt_manager.retrieve_information("visualisation_agent", user_prompt)        
 
 
      # setting message block for assistant in the case of callback to user 
      
     def callback_user(self, user_prompt):
         if (self.request.request_valid):
-            self.prompt_manager.callback_assistant_to_user("review_agent", user_prompt, self.request.instance_attributes)
+            self.prompt_manager.callback_assistant_to_user("review_agent", user_prompt, self.request)
             with st.chat_message("assistant"):
                 st.write(self.prompt_manager.callback)
                 st.session_state.messages.append({"role": "assistant", "content": self.prompt_manager.callback})
@@ -80,8 +80,8 @@ class Chatbot():
         
         self.extract_information(user_prompt)
 
-                
-        self.request.check_validity_of_request()
+        self.request.process_request()
+
         # data download, data processing, analysis...
         st.session_state.past_request.append(self.request)
         
@@ -106,8 +106,8 @@ class Chatbot():
             # self.vis_handler.visualise_data(self.data_handler)
             self.vis_handler.visualise_data(self.data_handler)
 
-        if (isinstance(self.request.analysis, str) and not ( self.request.analysis == None or self.request.analysis == "")):
-            match(self.request.analysis):
+        if (isinstance(self.request.request_analysis, str) and not ( self.request.request_analysis == None or self.request.request_analysis == "")):
+            match(self.request.request_analysis):
                 case "basic_analysis":
                     message = self.analysis_handler.basic_analysis(self.request)
 

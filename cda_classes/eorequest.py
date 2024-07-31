@@ -8,19 +8,25 @@ import streamlit as st
 class EORequest():
     def __init__(self):
         self.request_type = None
-        self.location = None
-        self.timeframe = None
-        self.product = None
-        self.specific_product = None
-        self.analysis = None
-        self.visualisation = None
+        self.request_location = None
+        self.request_timeframe = None
+        self.request_product = None
+        self.request_specific_product = None
+        self.request_analysis = None
+        self.request_visualisation = None
         self.request_valid = False
-        self.variables = None
-        self.load_variables()
+        self.request_variables = None
 
-        self.data = "ToBeFilledAfterDownload"
+        self.variable = None
+        self.variable_units = None
+        self.variable_cmap = None
+        self.variable_short_name = None
 
-    def check_validity_of_request(self):
+        self.data = None
+        self._instance_attributes = []
+        self.errors = []
+
+    def __check_validity_of_request(self):
         self.errors = []
         
         self.request_valid = True
@@ -28,9 +34,9 @@ class EORequest():
         # Gets all the variables of EORequest
         properties = vars(self)
         # Identify only instance attributes from all EORequest variables
-        self.instance_attributes = {key: value for key, value in properties.items() if not key.startswith("_")}
+        self._instance_attributes = {key: value for key, value in properties.items() if (not key.startswith("_") and key.startswith("request_"))}
         # Iterate through them all. If iterator, get subvalue. Otherwise check directly
-        for key, value in self.instance_attributes.items():
+        for key, value in self._instance_attributes.items():
             if isinstance(value, Iterable) and not isinstance(value, str):
                 for subvalue in value:
                     if not Utilities.valueisvalid(subvalue):
@@ -44,14 +50,23 @@ class EORequest():
                     self.errors.append(f"{key}")
                 
     
-    def process_request(self, requests):
-       pass
+    def process_request(self):
+        self.__check_validity_of_request()
+
+        if not self.errors:
+            for product in self.load_variables()[self.request_product[0]]:
+                if product["name"] == self.specific_product[0]:
+                    self.variable = product["variable_name"]
+                    self.variable_units = product["units"]
+                    self.variable_cmap = product["cmap"]
+                    self.variable_short_name = product["short_name"]
+
 
     def construct_product_agent_instruction(self):
-        self.load_variables()
-        product_list = [product['name'] for product in self.variables.get(self.product[0])]
-        instruction_format = f"'{self.product[0]}':\n- {product_list}"
+        print(self.load_variables())
+        product_list = [product['name'] for product in self.load_variables()[self.request_product[0]]]
+        instruction_format = f"'{self.request_product[0]}':\n- {product_list}"
         return instruction_format
     
     def load_variables(self):
-        self.variables = Utilities.load_config_file("yaml/variables.yaml") 
+        return Utilities.load_config_file("yaml/variables.yaml") 

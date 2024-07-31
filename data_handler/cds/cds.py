@@ -33,7 +33,6 @@ class ClimateDataStorageHandler():
         self.variables = eo_request.variables
         
         self.get_coordinates_from_location()
-        self.get_variable_attributes()
         self.extract_years_from_dates()
         
         self.cds_request_format["variable"] = self.variable
@@ -44,7 +43,6 @@ class ClimateDataStorageHandler():
     def get_data(self):
         request = self.cds_request_format
         name = self.request_format["cds_request"]["name"]
-        print(request, name)
         self.result = self.client.retrieve(name, request)
     
     def download(self, filename):
@@ -170,14 +168,7 @@ class ClimateDataStorageHandler():
         else:
             logger.error("Location could not be detected.")
             return None
-        
-    def get_variable_attributes(self):
-        for product in self.variables[self.product[0]]:
-            if product["name"] == self.specific_product[0]:
-                self.variable = product["variable_name"]
-                self.variable_units = product["units"]
-                self.variable_cmap = product["cmap"]
-                self.variable_short_name = product["short_name"]
+    
                 
     def extract_years_from_dates(self):
         start_date = datetime.strptime(self.timeframe[0], '%d/%m/%Y')
