@@ -4,23 +4,23 @@ import jsonpickle
 import os
 from streamlit_extras.bottom_container import bottom
 
-@st.cache_resource    
-def load_chatbot():
-    chatbot = Chatbot()
-    return chatbot
+# @st.cache_resource    
+# def load_chatbot():
+#     chatbot = Chatbot()
+#     return chatbot
 
 class EOChatBot():
     def __init__(self):
         # Init stuff
         self.i = 0
-        self.chatbot = load_chatbot()
+        self.chatbot = Chatbot()
 
     def run(self):
 
         # streamlit chatbot interface with chat history
         if "messages" not in st.session_state:
             st.session_state.messages = []
-        if "request" not in st.session_state:
+        if 'past_request' not in st.session_state:
             st.session_state.past_request = []
             
         for message in st.session_state.messages:
@@ -39,7 +39,7 @@ class EOChatBot():
             chat_col, button_col = st.columns([4, 1])
             
 
-                # Get User Input
+            # Get User Input
             with chat_col:
                 if (user_message := st.chat_input('user')):
                     st.session_state.messages.append({"role": "user", "content": user_message})
@@ -55,9 +55,7 @@ class EOChatBot():
                         
             self.chatbot.process_request(user_message)
                     
-                # request_complete = True
-            # Process user Input
-            # Output user input
+            # request_complete = True
 
         if (request_complete):
             self.chatbot.execute_request()

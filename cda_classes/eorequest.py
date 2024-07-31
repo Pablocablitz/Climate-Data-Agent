@@ -15,6 +15,9 @@ class EORequest():
         self.analysis = None
         self.visualisation = None
         self.request_valid = False
+        self.variables = None
+        self.load_variables()
+
         self.data = "ToBeFilledAfterDownload"
 
     def check_validity_of_request(self):
@@ -39,23 +42,14 @@ class EORequest():
                     self.request_valid = False
                     logger.info("checking validity of property: " + str(value))
                     self.errors.append(f"{key}")
-
-    # def check_history(self):
-    #     st.session_state.messages.append({"role": "user", "validity": self.request_valid})
-    #     messages = st.session_state.messages
-    #     if len(messages) >= 2 and messages["validity"][-2]:
-    #         with st.chat_message(messages["validity"][-2]):
-    #             if messages.get("validity"):
-    #                 print(message)
                 
-
     
     def process_request(self, requests):
        pass
 
     def construct_product_agent_instruction(self):
         self.load_variables()
-        product_list = [product['name'] for product in self.variables.get(self.product[0], [])]
+        product_list = [product['name'] for product in self.variables.get(self.product[0])]
         instruction_format = f"'{self.product[0]}':\n- {product_list}"
         return instruction_format
     

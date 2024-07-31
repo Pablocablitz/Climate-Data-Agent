@@ -61,7 +61,7 @@ class VisualisationHandler():
 
         heatmap = ax.pcolormesh(lon, lat, data_array,
                                 cmap=self.cds_data.variable_cmap, vmin=vmin, vmax=vmax, transform=ccrs.PlateCarree())
-        cbar = plt.colorbar(heatmap, ax=ax, orientation='horizontal', pad=0.05, extend='both')
+        cbar = plt.colorbar(heatmap, ax=ax, orientation='vertical', pad=0.02, aspect=40, fraction=0.05, extend='both')
         cbar.set_label(f'{self.cds_data.product} [{self.cds_data.variable_units}]')
         ax.set_title(f'{self.cds_data.product} Animation', fontsize=16)
         

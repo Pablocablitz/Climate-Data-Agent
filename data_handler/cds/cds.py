@@ -19,6 +19,7 @@ class ClimateDataStorageHandler():
         logger.info("Successfully log to Climate Data Store")
         self.load_request_format()
         self.years = []
+        self.variable = None
         
     def construct_request(self, eo_request: EORequest):
         
@@ -28,6 +29,7 @@ class ClimateDataStorageHandler():
         self.product = eo_request.product
         self.specific_product = eo_request.specific_product
         
+
         self.variables = eo_request.variables
         
         self.get_coordinates_from_location()
@@ -42,6 +44,7 @@ class ClimateDataStorageHandler():
     def get_data(self):
         request = self.cds_request_format
         name = self.request_format["cds_request"]["name"]
+        print(request, name)
         self.result = self.client.retrieve(name, request)
     
     def download(self, filename):
@@ -170,7 +173,7 @@ class ClimateDataStorageHandler():
         
     def get_variable_attributes(self):
         for product in self.variables[self.product[0]]:
-            if product["name"] == self.specific_product:
+            if product["name"] == self.specific_product[0]:
                 self.variable = product["variable_name"]
                 self.variable_units = product["units"]
                 self.variable_cmap = product["cmap"]
@@ -189,3 +192,6 @@ class ClimateDataStorageHandler():
                 pathlib.Path(__file__).absolute().parent) 
                 + "/../request_format.yaml")
         
+    def load_variables(self):
+        self.variables = Utilities.load_config_file("yaml/variables.yaml") 
+        return self.variables

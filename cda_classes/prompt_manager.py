@@ -24,6 +24,8 @@ class PromptManager():
         # Responses only ever have one key value pair, so grab next key to know type of response (timeframe, location...)
         dict_key = next(iter(cleaned_information)) 
         dict_value = cleaned_information[dict_key]
+        if not isinstance(dict_value, list):
+            dict_value = [dict_value]
         return dict_value
     
     # creating Callback to user before pulling request or notify of missing information
@@ -54,18 +56,19 @@ class PromptManager():
             response_type = attributes["response_type"],
             guideline_1 = attributes["guideline_1"],
             guideline_2 = attributes["guideline_2"],
-            guideline_3 = attributes["guideline_3"]
-        )
+            guideline_3 = attributes["guideline_3"],
+            guideline_4 = attributes["guideline_4"]
+            )
         
         if agent_type == "specific_product_agent":
             system_prompt = system_prompt.format(specific_product_list = self.specific_product_list)
         elif agent_type == "review_agent":
             system_prompt = system_prompt.format(
                 collected_information=(
-                    f"I will search for the climate product for {self.request['location']} "
-                    f"covering the period {self.request['timeframe']}. "
-                    f"The primary focus is on the category '{self.request['product']}', "
-                    f"specifically looking at the variable '{self.request['specific_product']}'."
+                    f"I will search for the climate product for {self.request.location} "
+                    f"covering the period {self.request.timeframe}. "
+                    f"The primary focus is on the category '{self.request.product}', "
+                    f"specifically looking at the variable '{self.request.specific_product}'."
                 )
             )
         elif agent_type == "analysis_agent":

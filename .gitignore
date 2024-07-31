@@ -4,3 +4,4 @@ __pycache__/
 results/*.mp4
 *.netcdf
 *.nc
+Dockerfile
