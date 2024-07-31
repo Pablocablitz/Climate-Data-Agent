@@ -20,7 +20,7 @@ class VisualisationHandler():
         pass
     def visualise_data(self, eorequest: EORequest):
         self.eorequest = eorequest
-        self.shortname = eorequest.data.keys()[0]
+        self.shortname = eorequest.variable_short_name
         self.generate_climate_animation()
         
     def generate_climate_animation(self):
@@ -36,8 +36,8 @@ class VisualisationHandler():
         lat_min, lat_max = self.eorequest.data[lat_name].min().values, self.eorequest.data[lat_name].max().values
             
         # Calculate vmin and vmax for colorbar
-        vmin = self.eorequest.data[self.shortname].min()  # minimum temperature value
-        vmax = self.eorequest.data[self.shortname].max() # maximum temperature value
+        vmin = 265  # minimum temperature value
+        vmax = 300 # maximum temperature value
         
         fig = plt.figure(figsize=(12, 8))
         ax = plt.axes(projection=ccrs.PlateCarree())
@@ -58,8 +58,8 @@ class VisualisationHandler():
         heatmap = ax.pcolormesh(lon, lat, data_array,
                                 cmap=self.eorequest.variable_cmap, vmin=vmin, vmax=vmax, transform=ccrs.PlateCarree())
         cbar = plt.colorbar(heatmap, ax=ax, orientation='vertical', pad=0.02, aspect=40, fraction=0.05, extend='both')
-        cbar.set_label(f'{self.eorequest.request_product} [{self.eorequest.variable_units}]')
-        ax.set_title(f'{self.eorequest.request_product} Animation', fontsize=16)
+        cbar.set_label(f'{self.eorequest.request_product[0]} {self.eorequest.variable_units}')
+        ax.set_title(f'{self.eorequest.request_product[0]} Animation', fontsize=16)
         
         try:
             img_png = cairosvg.svg2png(url="./assets/pin.svg", scale=2.0)
@@ -78,7 +78,7 @@ class VisualisationHandler():
 
         # Initialize the plot elements
         mesh = ax.pcolormesh(lon, lat, data_array,
-                            cmap=self.eorequest.variable_cmap, transform=ccrs.PlateCarree())
+                            cmap=self.eorequest.variable_cmap, vmin=vmin, vmax=vmax, transform=ccrs.PlateCarree())
         # Function to update the plot for each frame of the animation
         def update(frame):
             # Update the data for the pcolormesh
@@ -87,7 +87,7 @@ class VisualisationHandler():
             
             # Update the title with the current date
             date_str = np.datetime_as_string(self.eorequest.data.time[frame].values, unit="D")
-            ax.set_title(f'{self.eorequest.request_product} on {date_str} in {self.eorequest.request_location}', fontsize=16)
+            ax.set_title(f'{self.eorequest.request_product[0]} on {date_str} in {self.eorequest.request_location[0]}', fontsize=16)
 
             return [mesh] 
 

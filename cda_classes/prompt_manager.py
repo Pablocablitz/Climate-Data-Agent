@@ -33,7 +33,7 @@ class PromptManager():
     def callback_assistant_to_user(self, agent_type, user_prompt, request: EORequest):
         self.request = request
         system_prompt = self.construct_system_prompt(agent_type, user_prompt)
-        self.callback = self.llm_handler.generate_response(system_prompt)
+        self.callback = system_prompt
         
         
     def __load_agents(self):
@@ -75,7 +75,10 @@ class PromptManager():
                 {'analysis_types' : self.analysis_handler.analysis_types})
         elif agent_type == "missing_info_agent":
             formatted_string = '\n'.join(f"- {item}" for item in self.request)
-            system_prompt = system_prompt.format(errors = f"{formatted_string}")
+            system_prompt = f" \
+                Thank you for providing the product details. However, some required information is missing: \
+                '{formatted_string}' \
+                Could you please provide the missing information so I can assist you further? "
 
         return system_prompt
     

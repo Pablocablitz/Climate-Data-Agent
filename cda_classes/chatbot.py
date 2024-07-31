@@ -38,8 +38,8 @@ class Chatbot():
         
         # Step 0 - check context
         self.request.request_type = self.prompt_manager.retrieve_information("request_type_agent", user_prompt)
-        # Step 1 - get location
         
+        # Step 1 - get location
         self.request.request_location = self.prompt_manager.retrieve_information("location_agent", user_prompt)
 
         # Step 2 - get time interval
@@ -104,7 +104,7 @@ class Chatbot():
             self.request.data = self.data_handler.data
 
             # self.vis_handler.visualise_data(self.data_handler)
-            self.vis_handler.visualise_data(self.data_handler)
+            self.vis_handler.visualise_data(self.request)
 
         if (isinstance(self.request.request_analysis, str) and not ( self.request.request_analysis == None or self.request.request_analysis == "")):
             match(self.request.request_analysis):
@@ -176,6 +176,7 @@ class Chatbot():
                 print("Final self.request:", self.request)
                 self.request.request_valid = True
                 self.replace_last_entry()
+                self.request.process_request()
             else:
                 pass
         

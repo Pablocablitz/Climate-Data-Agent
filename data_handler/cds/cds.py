@@ -24,10 +24,10 @@ class ClimateDataStorageHandler():
     def construct_request(self, eo_request: EORequest):
         
         self.cds_request_format = self.request_format["cds_request"]["request"]
-        self.location = eo_request.location
-        self.timeframe = eo_request.timeframe
-        self.product = eo_request.product
-        self.specific_product = eo_request.specific_product
+        self.location = eo_request.request_location
+        self.timeframe = eo_request.request_timeframe
+        self.product = eo_request.request_product
+        self.specific_product = eo_request.request_specific_product
         
 
         self.variables = eo_request.variables
@@ -35,7 +35,7 @@ class ClimateDataStorageHandler():
         self.get_coordinates_from_location()
         self.extract_years_from_dates()
         
-        self.cds_request_format["variable"] = self.variable
+        self.cds_request_format["variable"] = eo_request.variable
         self.cds_request_format["year"] = self.years
         self.cds_request_format["area"] = self.adjusted_bounding_box
         self.datatype = self.cds_request_format["format"]
@@ -43,6 +43,7 @@ class ClimateDataStorageHandler():
     def get_data(self):
         request = self.cds_request_format
         name = self.request_format["cds_request"]["name"]
+        print(request, name)
         self.result = self.client.retrieve(name, request)
     
     def download(self, filename):

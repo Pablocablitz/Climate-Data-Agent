@@ -1,6 +1,5 @@
 from utils.utils import Utilities
 from loguru import logger
-import googlemaps
 from collections.abc import Iterable
 import streamlit as st
 
@@ -15,7 +14,7 @@ class EORequest():
         self.request_analysis = None
         self.request_visualisation = None
         self.request_valid = False
-        self.request_variables = None
+        self.variables = None
 
         self.variable = None
         self.variable_units = None
@@ -35,6 +34,7 @@ class EORequest():
         properties = vars(self)
         # Identify only instance attributes from all EORequest variables
         self._instance_attributes = {key: value for key, value in properties.items() if (not key.startswith("_") and key.startswith("request_"))}
+        print(self._instance_attributes)
         # Iterate through them all. If iterator, get subvalue. Otherwise check directly
         for key, value in self._instance_attributes.items():
             if isinstance(value, Iterable) and not isinstance(value, str):
@@ -52,10 +52,9 @@ class EORequest():
     
     def process_request(self):
         self.__check_validity_of_request()
-
         if not self.errors:
             for product in self.load_variables()[self.request_product[0]]:
-                if product["name"] == self.specific_product[0]:
+                if product["name"] == self.request_specific_product[0]:
                     self.variable = product["variable_name"]
                     self.variable_units = product["units"]
                     self.variable_cmap = product["cmap"]
@@ -63,7 +62,6 @@ class EORequest():
 
 
     def construct_product_agent_instruction(self):
-        print(self.load_variables())
         product_list = [product['name'] for product in self.load_variables()[self.request_product[0]]]
         instruction_format = f"'{self.request_product[0]}':\n- {product_list}"
         return instruction_format
