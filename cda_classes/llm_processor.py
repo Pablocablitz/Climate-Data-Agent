@@ -16,7 +16,7 @@ class LargeLanguageModelProcessor():
         """
         get Response on your input prompt and system prompt
         """
-        # print(system_prompt)
+
         messages = [
             {"role": "system", "content": system_prompt},
         ]

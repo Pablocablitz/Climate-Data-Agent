@@ -15,6 +15,8 @@ class DataHandler():
         self.request_cds.get_data()
         self.request_cds.download(filename)
         self.request_cds.process()
+
+        self.data = self.request_cds.ds
         
         # if (eo_request.datasource == "CDS"):
         #     self.cds.download()

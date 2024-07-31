@@ -1,5 +1,6 @@
 import yaml 
 import json 
+from loguru import logger
 
 
 # TODO:
@@ -38,7 +39,7 @@ class Utilities():
         end_idx = response.rfind('}')
         
         if start_idx == -1 or end_idx == -1:
-            print("No JSON object found in the response.")
+            logger.error("No JSON object found in the response.")
             return None
         
         # Extract the JSON string
@@ -46,11 +47,10 @@ class Utilities():
         
         # Replace single quotes with double quotes for valid JSON
         json_str = json_str.replace("'", '"')
-        print(json_str)
         try:
             return json.loads(json_str)
         except json.JSONDecodeError as e:
-            print(f"Error decoding JSON: {e}")
+            logger.error(f"Error decoding JSON: {e}")
             return None
         
         
