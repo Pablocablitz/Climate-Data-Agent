@@ -110,14 +110,14 @@ attributes:
     analysis_agent:
         expertise_area: "identifying analysis types"
         task_description: "determine the type of analysis requested from the given prompt"
-        list_of_types: "Choose from this list: Basic_Analysis, significant_event_detection, predictions, Comparison"
+        list_of_types: "Choose from this list: ${analysis_types}"
         response_type: |
             Please respond with only the JSON file format:
             {
               "analysis_type": "analysis_type_name"
             }
-        guideline_1: "If no specific analysis type is mentioned, set 'analysis_type' to 'None'."
-        guideline_2: "Only answer with the JSON file without any other information."
+        guideline_1: "If no specific analysis type is explicitly mentioned, set 'analysis_type' to 'None'."
+        guideline_2: "The user requesting data from a given location at a given timeframe does NOT constitute a valid analysis type."
         guideline_3: "Only answer with the JSON file without any other information."
         guideline_4: "If the prompt contains only numbers, such as years or dates, return 'None'."
 

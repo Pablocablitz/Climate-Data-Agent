@@ -6,6 +6,9 @@ import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 from matplotlib.animation import FuncAnimation
 from data_handler.data_handler import DataHandler
+from io import BytesIO
+import cairosvg
+from PIL import Image
 
 
 import uuid 
@@ -63,8 +66,8 @@ class VisualisationHandler():
         ax.set_title(f'{self.cds_data.product} Animation', fontsize=16)
         
         try:
-            # Load the location marker icon image (replace with your own image path)
-            icon_img = mpimg.imread('/home/eouser/miniconda3/envs/spacy_env/ERA_DATA/config_data/map.png')  # Adjust the path as needed
+            img_png = cairosvg.svg2png(url="./assets/pin.svg", scale=2.0)
+            icon_img = Image.open(BytesIO(img_png))
             
             # Example location coordinates (replace with your desired coordinates)
             location_lon = lon_min + (lon_max - lon_min) * 0.5

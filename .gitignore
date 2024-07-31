@@ -1,6 +1,7 @@
 old_code/*
+notebook/*
 __pycache__/
-results/*
+results/*.mp4
 *.netcdf
 *.nc
 Dockerfile
