@@ -1,14 +1,16 @@
+from tkinter import N
 import cdsapi
 from loguru import logger
 from cda_classes.eorequest import EORequest
-import googlemaps
+from geopy.geocoders import Nominatim
+import random
+import string
 from datetime import datetime
 from utils.utils import Utilities
 import xarray as xr
 import numpy as np
+import pathlib
 
-
-api_key = "AIzaSyD7S9rejpC8AQJcV4fzN5NKRncGncdrs8U"
 
 class ClimateDataStorageHandler():
     def __init__(self):
@@ -124,18 +126,18 @@ class ClimateDataStorageHandler():
         
     def get_coordinates_from_location(self, min_size: float = 10) -> dict:
         """Get a bounding box for a location using Google Maps Geocoding API with a minimum size."""
-        gmaps = googlemaps.Client(key=api_key)
-        
-        # Get place details
-        geocode_result = gmaps.geocode(self.location)
+
+        apikey = ''.join(random.choice(string.ascii_letters + string.digits + string.punctuation) for _ in range(20))
+        geolocator = Nominatim(user_agent = apikey)
+        geocode_result = geolocator.geocode(self.location)
         
         if geocode_result:
-            viewport = geocode_result[0]['geometry']['viewport']
+            viewport = geocode_result.raw['boundingbox']
             self.original_bounding_box = {
-                "north": round(viewport['northeast']['lat'], 2),
-                "south": round(viewport['southwest']['lat'], 2),
-                "east": round(viewport['northeast']['lng'], 2),
-                "west": round(viewport['southwest']['lng'], 2)
+                "north": round(float(viewport[0]), 2),
+                "south": round(float(viewport[1]), 2),
+                "east": round(float(viewport[2]), 2),
+                "west": round(float(viewport[3]), 2)
             }
             
             # Calculate the initial size of the bounding box
@@ -163,6 +165,7 @@ class ClimateDataStorageHandler():
 
 
         else:
+            logger.error("Location could not be detected.")
             return None
         
     def get_variable_attributes(self):
@@ -181,5 +184,8 @@ class ClimateDataStorageHandler():
         self.years = sorted({str(year) for year in range(start_date.year, end_date.year + 1)})
         
     def load_request_format(self):
-        self.request_format = Utilities.load_config_file("/home/eouser/programming/Climate-Data-Agent/data_handler/request_format.yaml")
+        self.request_format = Utilities.load_config_file(
+            str(
+                pathlib.Path(__file__).absolute().parent) 
+                + "/../request_format.yaml")
         
