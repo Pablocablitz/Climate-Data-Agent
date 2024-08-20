@@ -5,12 +5,16 @@ Temperature:
     short_name: "t2m"
     units: "°C"
     cmap: "coolwarm"
+    vmin: "-10"
+    vmax: "40"
   - name: "Skin temperature"
     description: "Temperature of the Earth's surface, relevant for climate monitoring."
     variable_name: "skin_temperature"
     units: "°C"
     short_name: "skt"
     cmap: "coolwarm"
+    vmin: "-10"
+    vmax: "45"
 Precipitation:
   - name: "Total precipitation"
     description: "Sum of all types of precipitation, key for climate and hydrological studies."
@@ -18,13 +22,35 @@ Precipitation:
     units: "mm"
     short_name: "tp"
     cmap: "Blues"
+    vmin: "0"
+    vmax: "50"
 Wind:
   - name: "10m wind speed"
     description: "East-west component of wind at 10 meters above the surface, relevant for general wind studies."
-    variable_name: "10m_u_component_of_wind, 10m_v_component_of_wind"
+    variable_name: ["10m_u_component_of_wind", "10m_v_component_of_wind"]
     units: "m/s"
     short_name: "w10"
     cmap: "viridis"
+    vmin: "0"
+    vmax: "10"
+Evaporation:
+  - name: "total evaporation"
+    description: "Accumulated amount of water that has evaporated from the Earth's surface, including a simplified representation of transpiration (from vegetation), into vapour in the air above."
+    variable_name: ["total_evaporation"]
+    units: "m"
+    short_name: "e"
+    cmap: "Blues"
+    vmin: "0"
+    vmax: "7"   
+Snow:
+  - name: "snow depth"
+    description: "Instantaneous grib-box average of the snow thickness on the ground. "
+    variable_name: ["snow_depth"]
+    units: "m"
+    short_name: "sde"
+    cmap: "YlGnBu"
+    vmin: "0"
+    vmax: "4"  
 Radiation:
   - name: "Surface net solar radiation"
     description: "Net solar radiation at the surface, crucial for energy balance studies."

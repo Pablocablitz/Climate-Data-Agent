@@ -72,7 +72,7 @@ attributes:
     product_agent:
         expertise_area: "identifying product types"
         task_description: "extract the main product type from the given request"
-        list_of_types: "Choose from this list: Temperature, Wind, Precipitation. Choose only a product when you can detect it in the prompt of the user if not put 'None'. "
+        list_of_types: "Choose from this list: Temperature, Wind, Precipitation, Evaporation, Snow. Choose only a product when you can detect it in the prompt of the user if not put 'None'. "
         response_type: |
             Please respond with only the JSON file format:
             {

@@ -100,8 +100,8 @@ class Chatbot():
         
             self.data_handler.construct_request(self.request)
             self.data_handler.download("ERA5")
-
-            self.request.data = self.data_handler.data
+            
+            self.request.store_and_process_data(self.data_handler.data)
 
             # self.vis_handler.visualise_data(self.data_handler)
             self.vis_handler.visualise_data(self.request)

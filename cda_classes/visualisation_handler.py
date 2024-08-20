@@ -19,11 +19,9 @@ class VisualisationHandler():
     def __init__(self):
         pass
     def visualise_data(self, eorequest: EORequest):
-        self.eorequest = eorequest
-        self.shortname = eorequest.variable_short_name
-        self.generate_climate_animation()
+        self.generate_climate_animation(eorequest)
         
-    def generate_climate_animation(self):
+    def generate_climate_animation(self, eorequest):
         """
         Generate an animation of temperature data.
         """
@@ -32,14 +30,14 @@ class VisualisationHandler():
         lon_name = 'longitude'
         
         # Define the wider area bounds (adjust these as needed)
-        lon_min, lon_max = self.eorequest.data[lon_name].min().values, self.eorequest.data[lon_name].max().values
-        lat_min, lat_max = self.eorequest.data[lat_name].min().values, self.eorequest.data[lat_name].max().values
+        lon_min, lon_max = eorequest.data[lon_name].min().values, eorequest.data[lon_name].max().values
+        lat_min, lat_max = eorequest.data[lat_name].min().values, eorequest.data[lat_name].max().values
             
         # Calculate vmin and vmax for colorbar
-        vmin = 265  # minimum temperature value
-        vmax = 300 # maximum temperature value
+        vmin = eorequest.vmin  # minimum temperature value
+        vmax = eorequest.vmax # maximum temperature value
         
-        fig = plt.figure(figsize=(12, 8))
+        fig = plt.figure(figsize=(8, 8))
         ax = plt.axes(projection=ccrs.PlateCarree())
         ax.set_extent([lon_min, lon_max, lat_min, lat_max], crs=ccrs.PlateCarree())  # Adjust the extent
 
@@ -48,18 +46,18 @@ class VisualisationHandler():
         ax.add_feature(cfeature.BORDERS, linewidth=0.5)
         
         # Extract DataArray from Dataset for the specified time index
-        data_array = self.eorequest.data[self.shortname].isel(time=0)  # Extracting DataArray for the first time step
+        data_array = eorequest.data[eorequest.variable_short_name].isel(time=0)  # Extracting DataArray for the first time step
         
         # Extract longitude and latitude arrays
-        lon = self.eorequest.data[lon_name]
-        lat = self.eorequest.data[lat_name]
+        lon = eorequest.data[lon_name]
+        lat = eorequest.data[lat_name]
         
 
         heatmap = ax.pcolormesh(lon, lat, data_array,
-                                cmap=self.eorequest.variable_cmap, vmin=vmin, vmax=vmax, transform=ccrs.PlateCarree())
+                                cmap=eorequest.variable_cmap, vmin=vmin, vmax=vmax, transform=ccrs.PlateCarree())
         cbar = plt.colorbar(heatmap, ax=ax, orientation='vertical', pad=0.02, aspect=40, fraction=0.05, extend='both')
-        cbar.set_label(f'{self.eorequest.request_product[0]} {self.eorequest.variable_units}')
-        ax.set_title(f'{self.eorequest.request_product[0]} Animation', fontsize=16)
+        cbar.set_label(f'{eorequest.request_product[0]} {eorequest.variable_units}')
+        ax.set_title(f'{eorequest.request_product[0]} Animation', fontsize=16)
         
         try:
             img_png = cairosvg.svg2png(url="./assets/pin.svg", scale=2.0)
@@ -78,25 +76,28 @@ class VisualisationHandler():
 
         # Initialize the plot elements
         mesh = ax.pcolormesh(lon, lat, data_array,
-                            cmap=self.eorequest.variable_cmap, vmin=vmin, vmax=vmax, transform=ccrs.PlateCarree())
+                            cmap=eorequest.variable_cmap, vmin=vmin, vmax=vmax, transform=ccrs.PlateCarree())
         # Function to update the plot for each frame of the animation
         def update(frame):
             # Update the data for the pcolormesh
-            new_data = self.eorequest.data[self.shortname].isel(time=frame).values
+            new_data = eorequest.data[eorequest.variable_short_name].isel(time=frame).values
             mesh.set_array(new_data.flatten())
             
             # Update the title with the current date
-            date_str = np.datetime_as_string(self.eorequest.data.time[frame].values, unit="D")
-            ax.set_title(f'{self.eorequest.request_product[0]} on {date_str} in {self.eorequest.request_location[0]}', fontsize=16)
+            date_str = np.datetime_as_string(eorequest.data.time[frame].values, unit="D")
+            ax.set_title(f'{eorequest.request_product[0]} on {date_str} in {eorequest.request_location[0]}', fontsize=16)
 
             return [mesh] 
 
         # Create the animation
-        animation = FuncAnimation(fig, update, frames=len(self.eorequest.data.time), interval=200, blit=True)
+        animation = FuncAnimation(fig, update, frames=len(eorequest.data.time), interval=200, blit=True)
         animation_uuid = uuid.uuid4()
         self.output_path = f'results/animation_{animation_uuid}.mp4'    # Display the animation
         animation.save(self.output_path, writer='ffmpeg', fps=4 )
         plt.close()  # Close initial plot to prevent duplicate display
+        
+    def generate_plot(self):
+        pass
         
 
     

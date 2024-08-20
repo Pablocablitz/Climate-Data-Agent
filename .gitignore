@@ -1,7 +1,10 @@
 old_code/*
 notebook/*
+*.ipynb
 __pycache__/
 results/*.mp4
 *.netcdf
 *.nc
 Dockerfile
+*.grib
+*.idx

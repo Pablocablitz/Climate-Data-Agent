@@ -12,6 +12,7 @@ import numpy as np
 import pathlib
 
 
+
 class ClimateDataStorageHandler():
     def __init__(self):
 
@@ -34,11 +35,13 @@ class ClimateDataStorageHandler():
         
         self.get_coordinates_from_location()
         self.extract_years_from_dates()
+        self.extract_months_from_dates()
         
         self.cds_request_format["variable"] = eo_request.variable
         self.cds_request_format["year"] = self.years
+        self.cds_request_format["month"] = self.months
         self.cds_request_format["area"] = self.adjusted_bounding_box
-        self.datatype = self.cds_request_format["format"]
+        self.datatype = self.cds_request_format["data_format"]
         
     def get_data(self):
         request = self.cds_request_format
@@ -66,20 +69,6 @@ class ClimateDataStorageHandler():
             ds = xr.open_dataset(self.filename, engine="cfgrib")
         else:
             raise ValueError(f"Unsupported format: {self.datatype}")
-
-        if 'v10' in ds and 'u10' in ds:
-            # Compute 'w10' as the magnitude of (u10, v10)
-            w10 = np.sqrt(ds['u10']**2 + ds['v10']**2)
-            
-            # Add 'w10' to the dataset
-            ds['w10'] = w10
-            
-            # Remove 'v10' and 'u10' from the dataset
-            ds = ds.drop_vars(['v10', 'u10'])
-            # Update variable_names to include 'w10'
-            self.variable_names = list(ds.data_vars)
-        else:
-            self.variable_names = list(ds.data_vars)
 
         self.ds = ds
         
@@ -177,6 +166,13 @@ class ClimateDataStorageHandler():
 
         # One-liner to extract unique years and sort them
         self.years = sorted({str(year) for year in range(start_date.year, end_date.year + 1)})
+        
+    def extract_months_from_dates(self):
+        start_date = datetime.strptime(self.timeframe[0], '%d/%m/%Y')
+        end_date = datetime.strptime(self.timeframe[1], '%d/%m/%Y')
+        
+        self.months = sorted({str(month) for month in range(start_date.month, end_date.month + 1)})
+        
         
     def load_request_format(self):
         self.request_format = Utilities.load_config_file(

@@ -1,5 +1,7 @@
 from data_handler.cds import ClimateDataStorageHandler
 from cda_classes.eorequest import EORequest
+from loguru import logger
+import numpy as np
 
 class DataHandler():
     def __init__(self, ):
@@ -15,8 +17,7 @@ class DataHandler():
         self.request_cds.get_data()
         self.request_cds.download(filename)
         self.request_cds.process()
-
         self.data = self.request_cds.ds
-        
         # if (eo_request.datasource == "CDS"):
         #     self.cds.download()
+
