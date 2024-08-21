@@ -1,6 +1,7 @@
 import yaml 
 import json 
 from loguru import logger
+import numpy as np
 
 
 # TODO:
@@ -61,4 +62,8 @@ class Utilities():
             valueisvalid = False        
         return valueisvalid
     
-    
+    @staticmethod
+    def significant_round(x, p):
+        x_positive = np.where(np.isfinite(x) & (x != 0), np.abs(x), 10**(p-1))
+        mags = 10 ** (p - 1 - np.floor(np.log10(x_positive)))
+        return np.round(x * mags) / mags

@@ -93,7 +93,7 @@ class VisualisationHandler():
         animation = FuncAnimation(fig, update, frames=len(eorequest.data.time), interval=200, blit=True)
         animation_uuid = uuid.uuid4()
         self.output_path = f'results/animation_{animation_uuid}.mp4'    # Display the animation
-        animation.save(self.output_path, writer='ffmpeg', fps=4 )
+        animation.save(self.output_path, writer='ffmpeg', fps=10 )
         plt.close()  # Close initial plot to prevent duplicate display
         
     def generate_plot(self):

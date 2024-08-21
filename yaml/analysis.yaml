@@ -1,0 +1,7 @@
+# YAML template for analysis results
+
+basic_analysis: "Based on a simple analysis, the following is detected about the dataset: \r\n
+  * The standard deviation is ${standard_deviation} ${unit}  \r\n
+  * The data ranges from ${min_val} ${unit} - ${max_val} ${unit}"
+
+anomaly_highlight: ""

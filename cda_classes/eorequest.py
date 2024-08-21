@@ -3,7 +3,10 @@ from loguru import logger
 from collections.abc import Iterable
 import streamlit as st
 import numpy as np
-
+from geopy.geocoders import Nominatim
+import random
+import string
+import xarray as xr
 
 class EORequest():
     def __init__(self):
@@ -16,11 +19,13 @@ class EORequest():
         self.request_visualisation = None
         self.request_valid = False
         self.variables = None
-
+        self.adjusted_bounding_box = None
+        self.original_bounding_box = None
         self.variable = None
         self.variable_units = None
         self.variable_cmap = None
         self.variable_short_name = None
+        self.variable_long_name = None
 
         self.data = None
         self._instance_attributes = []
@@ -59,6 +64,7 @@ class EORequest():
                     self.variable = product["variable_name"]
                     self.variable_units = product["units"]
                     self.variable_cmap = product["cmap"]
+                    self.variable_long_name = product["name"]
                     self.variable_short_name = product["short_name"]
                     self.vmin = product["vmin"]
                     self.vmax = product["vmax"]
@@ -74,8 +80,13 @@ class EORequest():
     
     def store_and_process_data(self, data):
         self.data = data
-        variable_names = list(self.data.data_vars)
+
         
+        self._process_data()
+        
+    def _process_data(self):
+        variable_names = list(self.data.data_vars)
+                
         match(variable_names[0]):
             case "v10":
                 self._process_windspeed()
@@ -84,7 +95,8 @@ class EORequest():
                 self._process_windspeed()
                 
             case "e":
-                self.data["e"] *= -1000  #convert from kelvin to celsius 
+                self.data["e"] *= -1000  #convert from m to mm 
+                self.variable_units = "mm"
                                
             case "t2m":
                 self.data["t2m"] -= 273.15  #convert from kelvin to celsius
@@ -94,6 +106,7 @@ class EORequest():
 
             case "tp":
                 self.data["tp"] *= 1000 #convert m to mm in precipitation data
+                self.variable_units = "mm"
 
             case _:
                 message = "Unexpected type of variable name provided! Received:" + variable_names[0]
@@ -110,3 +123,71 @@ class EORequest():
         
         # Remove 'v10' and 'u10' from the dataset
         self.data = self.data.drop_vars(['v10', 'u10'])
+        
+    def get_coordinates_from_location(self, min_size: float = 10) -> dict:
+        """Get a bounding box for a location using Google Maps Geocoding API with a minimum size."""
+
+        apikey = ''.join(random.choice(string.ascii_letters + string.digits + string.punctuation) for _ in range(20))
+        geolocator = Nominatim(user_agent = apikey)
+        geocode_result = geolocator.geocode(self.request_location)
+        
+        if geocode_result:
+            viewport = geocode_result.raw['boundingbox']
+            self.original_bounding_box = {
+                "north": round(float(viewport[0]), 2),
+                "south": round(float(viewport[1]), 2),
+                "east": round(float(viewport[2]), 2),
+                "west": round(float(viewport[3]), 2)
+            }
+            
+            # Calculate the initial size of the bounding box
+            north = self.original_bounding_box["north"]
+            south = self.original_bounding_box["south"]
+            east = self.original_bounding_box["east"]
+            west = self.original_bounding_box["west"]
+
+            lat_diff = north - south
+            lng_diff = east - west
+            
+            # Ensure the bounding box has a minimum size
+            if lat_diff < min_size:
+                mid_lat = (north + south) / 2
+                north = round(mid_lat + (min_size / 2), 2)
+                south = round(mid_lat - (min_size / 2), 2)
+
+            if lng_diff < min_size:
+                mid_lng = (east + west) / 2
+                east = round(mid_lng + (min_size / 2), 2)
+                west = round(mid_lng - (min_size / 2), 2)
+                
+            self.adjusted_bounding_box = [north, west, south, east]
+
+
+
+        else:
+            logger.error("Location could not be detected.")
+            return None
+        
+    def populate_dummy_data(self):
+        self.request_type = ["True"]
+        self.request_location = ["London"]
+        self.request_timeframe = ["01/04/2023", "31/10/2023"]
+        self.request_product = ["Temperature"]
+        self.request_specific_product = ["2m temperature"]
+        self.request_analysis = ["basic_analysis"]
+        self.request_visualisation = ["time_series"]
+        self.request_valid = True
+        self.adjusted_bounding_box = [56.49, -5.09, 46.49, 4.91]
+        self.original_bounding_box = {"north": 51.29, "south": 51.69, "east": -0.51, "west": 0.33}
+        self.variable = "2m_temperature"
+        self.variable_units = "\u00b0C"
+        self.variable_cmap = "coolwarm"
+        self.variable_short_name = "t2m"
+        self.variable_long_name = "2m temperature"
+        
+        self.errors = []
+        
+        self.vmin = "-10"
+        self.vmax = "40"
+        
+        self.store_and_process_data(xr.open_dataset("ERA5_DEBUGMODE.grib", engine="cfgrib"))

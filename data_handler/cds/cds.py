@@ -1,4 +1,3 @@
-from tkinter import N
 import cdsapi
 from loguru import logger
 from cda_classes.eorequest import EORequest
@@ -29,18 +28,17 @@ class ClimateDataStorageHandler():
         self.timeframe = eo_request.request_timeframe
         self.product = eo_request.request_product
         self.specific_product = eo_request.request_specific_product
-        
+    
 
         self.variables = eo_request.variables
         
-        self.get_coordinates_from_location()
         self.extract_years_from_dates()
         self.extract_months_from_dates()
         
         self.cds_request_format["variable"] = eo_request.variable
         self.cds_request_format["year"] = self.years
         self.cds_request_format["month"] = self.months
-        self.cds_request_format["area"] = self.adjusted_bounding_box
+        self.cds_request_format["area"] = eo_request.adjusted_bounding_box
         self.datatype = self.cds_request_format["data_format"]
         
     def get_data(self):
@@ -113,52 +111,6 @@ class ClimateDataStorageHandler():
         self.months = ds_filtered['time'].dt.strftime('%Y-%m').values
         self.monthly_means = ds_filtered[self.variable_names].groupby('time.month').mean(dim=['latitude', 'longitude']).values
 
-        
-        
-    def get_coordinates_from_location(self, min_size: float = 10) -> dict:
-        """Get a bounding box for a location using Google Maps Geocoding API with a minimum size."""
-
-        apikey = ''.join(random.choice(string.ascii_letters + string.digits + string.punctuation) for _ in range(20))
-        geolocator = Nominatim(user_agent = apikey)
-        geocode_result = geolocator.geocode(self.location)
-        
-        if geocode_result:
-            viewport = geocode_result.raw['boundingbox']
-            self.original_bounding_box = {
-                "north": round(float(viewport[0]), 2),
-                "south": round(float(viewport[1]), 2),
-                "east": round(float(viewport[2]), 2),
-                "west": round(float(viewport[3]), 2)
-            }
-            
-            # Calculate the initial size of the bounding box
-            north = self.original_bounding_box["north"]
-            south = self.original_bounding_box["south"]
-            east = self.original_bounding_box["east"]
-            west = self.original_bounding_box["west"]
-
-            lat_diff = north - south
-            lng_diff = east - west
-            
-            # Ensure the bounding box has a minimum size
-            if lat_diff < min_size:
-                mid_lat = (north + south) / 2
-                north = round(mid_lat + (min_size / 2), 2)
-                south = round(mid_lat - (min_size / 2), 2)
-
-            if lng_diff < min_size:
-                mid_lng = (east + west) / 2
-                east = round(mid_lng + (min_size / 2), 2)
-                west = round(mid_lng - (min_size / 2), 2)
-                
-            self.adjusted_bounding_box = [north, west, south, east]
-
-
-
-        else:
-            logger.error("Location could not be detected.")
-            return None
-    
                 
     def extract_years_from_dates(self):
         start_date = datetime.strptime(self.timeframe[0], '%d/%m/%Y')

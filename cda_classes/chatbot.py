@@ -7,6 +7,12 @@ from cda_classes.analysis_handler import AnalysisHandler
 import streamlit as st
 import jsonpickle
 from loguru import logger
+import plotly.express as px
+import plotly.graph_objects as go
+import pandas as pd
+
+DEBUGMODE = True
+
 
 @st.cache_resource    
 def load_llm():
@@ -25,6 +31,10 @@ class Chatbot():
         # May want to move this history functionality into a separate file (some type of logging package/module)
         # Or do it in the main, since only the main knows when a request is completed
         self.request = EORequest()
+        
+        if (DEBUGMODE):
+            with st.chat_message("assistant"):
+                st.write("NOTE: THE DEBUGMODE IS ENABLED AND ALL REQUESTS WILL BE IGNORED. DUMMY DATA WILL BE LOADED AND DISPLAYED")
 
     def display_string_to_user(response):
         #Something something streamlit
@@ -58,6 +68,8 @@ class Chatbot():
 
         # Step 6 - get visualisation type
         self.request.request_visualisation = self.prompt_manager.retrieve_information("visualisation_agent", user_prompt)        
+        
+        self.request.get_coordinates_from_location()
 
 
      # setting message block for assistant in the case of callback to user 
@@ -77,55 +89,82 @@ class Chatbot():
                 st.stop()
 
     def process_request(self, user_prompt): 
-        
-        self.extract_information(user_prompt)
+        if (not DEBUGMODE):
+            self.extract_information(user_prompt)
 
-        self.request.process_request()
+            self.request.process_request()
 
-        # data download, data processing, analysis...
-        st.session_state.past_request.append(self.request)
-        
+            # data download, data processing, analysis...
+            st.session_state.past_request.append(self.request)
+            
 
-        # check if the context is related to history or has no relation with climate at all 
-        if ((len(st.session_state.past_request) >= 2) and (not st.session_state.past_request[-2].request_valid)):
-            self.check_history()
-        elif self.request.request_type == "False":
-            self.check_climate_context()
-        else:
-            pass
-        
-        self.callback_user(user_prompt)
+            # check if the context is related to history or has no relation with climate at all 
+            if ((len(st.session_state.past_request) >= 2) and (not st.session_state.past_request[-2].request_valid)):
+                self.check_history()
+            elif self.request.request_type == "False":
+                self.check_climate_context()
+            else:
+                pass
+            
+            self.callback_user(user_prompt)
     
         with st.spinner("Downloading Data..."):
         
-            self.data_handler.construct_request(self.request)
-            self.data_handler.download("ERA5")
+            if DEBUGMODE:
+                self.request.populate_dummy_data()
+                self.vis_handler.output_path = "results/animation_DEBUGMODE.mp4"
+            else:
+                self.data_handler.construct_request(self.request)
+                self.data_handler.download("ERA5")
+                self.request.store_and_process_data(self.data_handler.data)
+                # self.vis_handler.visualise_data(self.data_handler)
+                self.vis_handler.visualise_data(self.request)
+
+
             
-            self.request.store_and_process_data(self.data_handler.data)
-
-            # self.vis_handler.visualise_data(self.data_handler)
-            self.vis_handler.visualise_data(self.request)
-
-        if (isinstance(self.request.request_analysis, str) and not ( self.request.request_analysis == None or self.request.request_analysis == "")):
-            match(self.request.request_analysis):
+        analysis_type = self.request.request_analysis[0]
+        
+        if (isinstance(analysis_type, str) and not ( analysis_type == None or analysis_type == "")):
+            match(analysis_type):
                 case "basic_analysis":
-                    message = self.analysis_handler.basic_analysis(self.request)
+                    df = self.request.data.to_dataarray().to_dataframe(name=self.request.variable_long_name).reset_index()
+
+                    figure = px.density_mapbox(df, lat=df['latitude'], lon=df['longitude'], z=df[self.request.variable_long_name],
+                                                    radius=8, animation_frame="valid_time", opacity = 0.5, color_continuous_scale ='darkmint',
+                                                    width = 640, height = 500, range_color=[int(self.request.vmin),int(self.request.vmax)])
+                    figure.update_layout(mapbox_style="carto-positron", mapbox_zoom=3, mapbox_center = {"lat": 52.3, "lon": 1.3712})
+
+                    figure.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
+        #             figure = px.scatter(df, x="gdpPercap", y="lifeExp", animation_frame="year", animation_group="country",
+        #    size="pop", color="continent", hover_name="country",
+        #    log_x=True, size_max=55, range_x=[100,100000], range_y=[25,90])
+                    message='placeholder'
+
+                    #figure, message = self.analysis_handler.basic_analysis(self.request)
 
                 case "comparison":
-                    message = self.analysis_handler.comparison(self.request)
+                    figure, message = self.analysis_handler.comparison(self.request)
 
                 case "predictions":
-                    message = self.analysis_handler.predictions(self.request)
+                    figure, message = self.analysis_handler.predictions(self.request)
 
                 case "significant_event_detection":
-                    message = self.analysis_handler.significant_event_detection(self.request)
+                    figure, message = self.analysis_handler.significant_event_detection(self.request)
 
                 case _:
                     message = "Unexpected type of analysis provided! Received:" + self.request.analysis
                     logger.error(message)
+            
+            with st.chat_message("assistant"):    
+                st.write(message)
+                st.session_state.messages.append({"role": "assistant", "content": message})
                 
-            st.write(message)
-            st.session_state.messages.append({"role": "assistant", "content": message})
+                if (figure):
+                    st.plotly_chart(figure)
+                    st.session_state.messages.append({"role": "assistant", "figure": figure})
+
+
+            
 
         else:
             logger.info("No analysis type was present.")
@@ -133,7 +172,8 @@ class Chatbot():
         with st.chat_message("assistant"):
             # st.write(response)
             if self.vis_handler.output_path:
-                st.video(self.vis_handler.output_path)
+                #st.video(self.vis_handler.output_path)
+                pass
         
         st.session_state.messages.append({"role": "assistant","video": self.vis_handler.output_path})
 

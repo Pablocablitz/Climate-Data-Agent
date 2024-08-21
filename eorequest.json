@@ -1,0 +1,403 @@
+{
+    "py/object": "cda_classes.eorequest.EORequest",
+    "request_type": [
+        "True"
+    ],
+    "request_location": [
+        "London"
+    ],
+    "request_timeframe": [
+        "01/04/2023",
+        "31/10/2023"
+    ],
+    "request_product": [
+        "Temperature"
+    ],
+    "request_specific_product": [
+        "2m temperature"
+    ],
+    "request_analysis": [
+        "basic_analysis"
+    ],
+    "request_visualisation": [
+        "time_series"
+    ],
+    "request_valid": true,
+    "variables": null,
+    "adjusted_bounding_box": [
+        56.49,
+        -5.09,
+        46.49,
+        4.91
+    ],
+    "original_bounding_box": {
+        "north": 51.29,
+        "south": 51.69,
+        "east": -0.51,
+        "west": 0.33
+    },
+    "variable": "2m_temperature",
+    "variable_units": "\u00b0C",
+    "variable_cmap": "coolwarm",
+    "variable_short_name": "t2m",
+    "data": {
+        "py/object": "xarray.core.dataset.Dataset",
+        "_attrs": {
+            "GRIB_edition": 1,
+            "GRIB_centre": "ecmf",
+            "GRIB_centreDescription": "European Centre for Medium-Range Weather Forecasts",
+            "GRIB_subCentre": 0,
+            "Conventions": "CF-1.7",
+            "institution": "European Centre for Medium-Range Weather Forecasts",
+            "history": "2024-08-21T10:02 GRIB to CDM+CF via cfgrib-0.9.14.0/ecCodes-2.26.0 with {\"source\": \"ERA5.grib\", \"filter_by_keys\": {}, \"encode_cf\": [\"parameter\", \"time\", \"geography\", \"vertical\"]}"
+        },
+        "_coord_names": {
+            "py/set": [
+                "step",
+                "surface",
+                "time",
+                "number",
+                "latitude",
+                "valid_time",
+                "longitude"
+            ]
+        },
+        "_dims": {
+            "time": 210,
+            "latitude": 101,
+            "longitude": 101
+        },
+        "_encoding": {
+            "unlimited_dims": {
+                "py/set": []
+            },
+            "source": "/home/eouser/programming/Climate-Data-Agent/ERA5.grib"
+        },
+        "_indexes": {
+            "time": {
+                "py/object": "xarray.core.indexes.PandasIndex"
+            },
+            "latitude": {
+                "py/object": "xarray.core.indexes.PandasIndex"
+            },
+            "longitude": {
+                "py/object": "xarray.core.indexes.PandasIndex"
+            }
+        },
+        "_variables": {
+            "number": {
+                "py/object": "xarray.core.variable.Variable",
+                "_dims": {
+                    "py/tuple": []
+                },
+                "_data": {
+                    "py/id": 20
+                },
+                "_attrs": {
+                    "py/id": 301
+                },
+                "_encoding": {
+                    "source": "ERA5.grib",
+                    "filter_by_keys": {
+                        "py/id": 299
+                    },
+                    "encode_cf": {
+                        "py/tuple": [
+                            "parameter",
+                            "time",
+                            "geography",
+                            "vertical"
+                        ]
+                    },
+                    "original_shape": {
+                        "py/tuple": []
+                    },
+                    "dtype": {
+                        "py/id": 31
+                    }
+                }
+            },
+            "time": {
+                "py/object": "xarray.core.variable.IndexVariable",
+                "_dims": {
+                    "py/tuple": [
+                        "time"
+                    ]
+                },
+                "_data": {
+                    "py/id": 304
+                },
+                "_attrs": {
+                    "py/id": 317
+                },
+                "_encoding": {
+                    "source": "ERA5.grib",
+                    "filter_by_keys": {
+                        "py/id": 299
+                    },
+                    "encode_cf": {
+                        "py/tuple": [
+                            "parameter",
+                            "time",
+                            "geography",
+                            "vertical"
+                        ]
+                    },
+                    "original_shape": {
+                        "py/tuple": [
+                            210
+                        ]
+                    },
+                    "units": "seconds since 1970-01-01T00:00:00",
+                    "calendar": "proleptic_gregorian",
+                    "dtype": {
+                        "py/id": 31
+                    }
+                }
+            },
+            "step": {
+                "py/object": "xarray.core.variable.Variable",
+                "_dims": {
+                    "py/tuple": []
+                },
+                "_data": {
+                    "py/id": 320
+                },
+                "_attrs": {
+                    "py/id": 333
+                },
+                "_encoding": {
+                    "source": "ERA5.grib",
+                    "filter_by_keys": {
+                        "py/id": 299
+                    },
+                    "encode_cf": {
+                        "py/tuple": [
+                            "parameter",
+                            "time",
+                            "geography",
+                            "vertical"
+                        ]
+                    },
+                    "original_shape": {
+                        "py/tuple": []
+                    },
+                    "units": "hours",
+                    "dtype": {
+                        "py/id": 38
+                    }
+                }
+            },
+            "surface": {
+                "py/object": "xarray.core.variable.Variable",
+                "_dims": {
+                    "py/tuple": []
+                },
+                "_data": {
+                    "py/id": 336
+                },
+                "_attrs": {
+                    "py/id": 341
+                },
+                "_encoding": {
+                    "source": "ERA5.grib",
+                    "filter_by_keys": {
+                        "py/id": 299
+                    },
+                    "encode_cf": {
+                        "py/tuple": [
+                            "parameter",
+                            "time",
+                            "geography",
+                            "vertical"
+                        ]
+                    },
+                    "original_shape": {
+                        "py/tuple": []
+                    },
+                    "dtype": {
+                        "py/id": 38
+                    }
+                }
+            },
+            "latitude": {
+                "py/object": "xarray.core.variable.IndexVariable",
+                "_dims": {
+                    "py/tuple": [
+                        "latitude"
+                    ]
+                },
+                "_data": {
+                    "py/id": 344
+                },
+                "_attrs": {
+                    "py/id": 350
+                },
+                "_encoding": {
+                    "source": "ERA5.grib",
+                    "filter_by_keys": {
+                        "py/id": 299
+                    },
+                    "encode_cf": {
+                        "py/tuple": [
+                            "parameter",
+                            "time",
+                            "geography",
+                            "vertical"
+                        ]
+                    },
+                    "original_shape": {
+                        "py/tuple": [
+                            101
+                        ]
+                    },
+                    "dtype": {
+                        "py/id": 38
+                    }
+                }
+            },
+            "longitude": {
+                "py/object": "xarray.core.variable.IndexVariable",
+                "_dims": {
+                    "py/tuple": [
+                        "longitude"
+                    ]
+                },
+                "_data": {
+                    "py/id": 353
+                },
+                "_attrs": {
+                    "py/id": 359
+                },
+                "_encoding": {
+                    "source": "ERA5.grib",
+                    "filter_by_keys": {
+                        "py/id": 299
+                    },
+                    "encode_cf": {
+                        "py/tuple": [
+                            "parameter",
+                            "time",
+                            "geography",
+                            "vertical"
+                        ]
+                    },
+                    "original_shape": {
+                        "py/tuple": [
+                            101
+                        ]
+                    },
+                    "dtype": {
+                        "py/id": 38
+                    }
+                }
+            },
+            "valid_time": {
+                "py/object": "xarray.core.variable.Variable",
+                "_dims": {
+                    "py/tuple": [
+                        "time"
+                    ]
+                },
+                "_data": {
+                    "py/id": 362
+                },
+                "_attrs": {
+                    "py/id": 374
+                },
+                "_encoding": {
+                    "source": "ERA5.grib",
+                    "filter_by_keys": {
+                        "py/id": 299
+                    },
+                    "encode_cf": {
+                        "py/tuple": [
+                            "parameter",
+                            "time",
+                            "geography",
+                            "vertical"
+                        ]
+                    },
+                    "original_shape": {
+                        "py/tuple": [
+                            210
+                        ]
+                    },
+                    "units": "seconds since 1970-01-01T00:00:00",
+                    "calendar": "proleptic_gregorian",
+                    "dtype": {
+                        "py/id": 38
+                    }
+                }
+            },
+            "t2m": {
+                "py/object": "xarray.core.variable.Variable",
+                "_dims": {
+                    "py/tuple": [
+                        "time",
+                        "latitude",
+                        "longitude"
+                    ]
+                },
+                "_data": {
+                    "py/id": 377
+                },
+                "_attrs": {
+                    "py/id": 378
+                },
+                "_encoding": {
+                    "source": "ERA5.grib",
+                    "filter_by_keys": {
+                        "py/id": 299
+                    },
+                    "encode_cf": {
+                        "py/tuple": [
+                            "parameter",
+                            "time",
+                            "geography",
+                            "vertical"
+                        ]
+                    },
+                    "original_shape": {
+                        "py/tuple": [
+                            210,
+                            101,
+                            101
+                        ]
+                    },
+                    "dtype": {
+                        "py/id": 295
+                    },
+                    "coordinates": "number time step surface latitude longitude valid_time"
+                }
+            }
+        }
+    },
+    "_instance_attributes": {
+        "request_type": {
+            "py/id": 1
+        },
+        "request_location": {
+            "py/id": 2
+        },
+        "request_timeframe": {
+            "py/id": 3
+        },
+        "request_product": {
+            "py/id": 4
+        },
+        "request_specific_product": {
+            "py/id": 5
+        },
+        "request_analysis": {
+            "py/id": 6
+        },
+        "request_visualisation": {
+            "py/id": 7
+        },
+        "request_valid": true
+    },
+    "errors": [],
+    "vmin": "-10",
+    "vmax": "40"
+}
