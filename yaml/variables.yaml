@@ -4,7 +4,7 @@ Temperature:
     variable_name: "2m_temperature"
     short_name: "t2m"
     units: "°C"
-    cmap: "coolwarm"
+    cmap: "balance"
     vmin: "-10"
     vmax: "40"
   - name: "Skin temperature"
@@ -12,7 +12,7 @@ Temperature:
     variable_name: "skin_temperature"
     units: "°C"
     short_name: "skt"
-    cmap: "coolwarm"
+    cmap: "balance"
     vmin: "-10"
     vmax: "45"
 Precipitation:
@@ -21,7 +21,7 @@ Precipitation:
     variable_name: "total_precipitation"
     units: "mm"
     short_name: "tp"
-    cmap: "Blues"
+    cmap: "blues"
     vmin: "0"
     vmax: "50"
 Wind:
@@ -39,7 +39,7 @@ Evaporation:
     variable_name: ["total_evaporation"]
     units: "m"
     short_name: "e"
-    cmap: "Blues"
+    cmap: "blues"
     vmin: "0"
     vmax: "7"   
 Snow:

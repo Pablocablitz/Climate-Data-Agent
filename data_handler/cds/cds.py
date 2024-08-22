@@ -123,7 +123,7 @@ class ClimateDataStorageHandler():
         start_date = datetime.strptime(self.timeframe[0], '%d/%m/%Y')
         end_date = datetime.strptime(self.timeframe[1], '%d/%m/%Y')
         
-        self.months = sorted({str(month) for month in range(start_date.month, end_date.month + 1)})
+        self.months = sorted({str(month).zfill(2) for month in range(start_date.month, end_date.month + 1)})
         
         
     def load_request_format(self):

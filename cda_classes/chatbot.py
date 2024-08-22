@@ -11,7 +11,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
 
-DEBUGMODE = True
+DEBUGMODE = False
 
 
 @st.cache_resource    
@@ -35,13 +35,6 @@ class Chatbot():
         if (DEBUGMODE):
             with st.chat_message("assistant"):
                 st.write("NOTE: THE DEBUGMODE IS ENABLED AND ALL REQUESTS WILL BE IGNORED. DUMMY DATA WILL BE LOADED AND DISPLAYED")
-
-    def display_string_to_user(response):
-        #Something something streamlit
-        pass
-    
-    def check_context(self, user_prompt):
-        pass
 
     def extract_information(self, user_prompt):
         # Initialize the dictionary to store responses
@@ -69,7 +62,7 @@ class Chatbot():
         # Step 6 - get visualisation type
         self.request.request_visualisation = self.prompt_manager.retrieve_information("visualisation_agent", user_prompt)        
         
-        self.request.get_coordinates_from_location()
+        self.request.post_process_request_variables()
 
 
      # setting message block for assistant in the case of callback to user 
@@ -108,39 +101,29 @@ class Chatbot():
             
             self.callback_user(user_prompt)
     
+
+    
         with st.spinner("Downloading Data..."):
         
             if DEBUGMODE:
                 self.request.populate_dummy_data()
-                self.vis_handler.output_path = "results/animation_DEBUGMODE.mp4"
+                # self.vis_handler.output_path = "results/animation_DEBUGMODE.mp4"
             else:
                 self.data_handler.construct_request(self.request)
                 self.data_handler.download("ERA5")
                 self.request.store_and_process_data(self.data_handler.data)
-                # self.vis_handler.visualise_data(self.data_handler)
+                animation = self.vis_handler.visualise_data(self.request)
                 self.vis_handler.visualise_data(self.request)
 
 
             
-        analysis_type = self.request.request_analysis[0]
         
+        analysis_type = self.request.request_analysis[0]        
         if (isinstance(analysis_type, str) and not ( analysis_type == None or analysis_type == "")):
             match(analysis_type):
                 case "basic_analysis":
-                    df = self.request.data.to_dataarray().to_dataframe(name=self.request.variable_long_name).reset_index()
 
-                    figure = px.density_mapbox(df, lat=df['latitude'], lon=df['longitude'], z=df[self.request.variable_long_name],
-                                                    radius=8, animation_frame="valid_time", opacity = 0.5, color_continuous_scale ='darkmint',
-                                                    width = 640, height = 500, range_color=[int(self.request.vmin),int(self.request.vmax)])
-                    figure.update_layout(mapbox_style="carto-positron", mapbox_zoom=3, mapbox_center = {"lat": 52.3, "lon": 1.3712})
-
-                    figure.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
-        #             figure = px.scatter(df, x="gdpPercap", y="lifeExp", animation_frame="year", animation_group="country",
-        #    size="pop", color="continent", hover_name="country",
-        #    log_x=True, size_max=55, range_x=[100,100000], range_y=[25,90])
-                    message='placeholder'
-
-                    #figure, message = self.analysis_handler.basic_analysis(self.request)
+                    figure, message = self.analysis_handler.basic_analysis(self.request)
 
                 case "comparison":
                     figure, message = self.analysis_handler.comparison(self.request)
@@ -161,21 +144,21 @@ class Chatbot():
                 
                 if (figure):
                     st.plotly_chart(figure)
-                    st.session_state.messages.append({"role": "assistant", "figure": figure})
+                    st.session_state.messages.append({"role": "assistant", "plotly_chart": figure})
 
 
-            
+        
 
         else:
             logger.info("No analysis type was present.")
-                
+            
         with st.chat_message("assistant"):
             # st.write(response)
-            if self.vis_handler.output_path:
-                #st.video(self.vis_handler.output_path)
+            if animation:
+                st.plotly_chart(animation)
                 pass
         
-        st.session_state.messages.append({"role": "assistant","video": self.vis_handler.output_path})
+        st.session_state.messages.append({"role": "assistant","plotly_chart": animation})
 
     def output_results(self):
         pass

@@ -27,8 +27,10 @@ class EOChatBot():
             with st.chat_message(message["role"]):
                 if message.get("content"):
                     st.markdown(message["content"], unsafe_allow_html=True)
-                if message.get("video"):
+                elif message.get("video"):
                     st.video(message["video"])
+                elif message.get("plotly_chart"):
+                    st.plotly_chart(message["plotly_chart"])
 
 
                     

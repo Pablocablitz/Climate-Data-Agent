@@ -9,6 +9,7 @@ from cda_classes.eorequest import EORequest
 from io import BytesIO
 import cairosvg
 from PIL import Image
+import plotly.express as px
 
 
 import uuid 
@@ -19,8 +20,10 @@ class VisualisationHandler():
     def __init__(self):
         pass
     def visualise_data(self, eorequest: EORequest):
-        self.generate_climate_animation(eorequest)
         
+        animation = self.generate_plotly_animation(eorequest)
+        
+        return animation
     def generate_climate_animation(self, eorequest):
         """
         Generate an animation of temperature data.
@@ -96,6 +99,21 @@ class VisualisationHandler():
         animation.save(self.output_path, writer='ffmpeg', fps=10 )
         plt.close()  # Close initial plot to prevent duplicate display
         
+    
+    def generate_plotly_animation(self, eorequest: EORequest):    
+        df = eorequest.data.to_dataarray().to_dataframe(name=eorequest.variable_long_name).reset_index()
+        
+        df = df.dropna(subset=[eorequest.variable_long_name])
+
+        figure = px.density_mapbox(df, lat=df['latitude'], lon=df['longitude'], z=df[eorequest.variable_long_name],
+                                        radius=8, animation_frame="valid_time", opacity = 0.5, color_continuous_scale =eorequest.variable_cmap,
+                                        width = 640, height = 500, range_color=[int(eorequest.vmin),int(eorequest.vmax)])
+        figure.update_layout(mapbox_style="carto-positron", mapbox_zoom=3, mapbox_center = {"lat": 52.3, "lon": 1.3712})
+
+        figure.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
+        
+        return figure
+    
     def generate_plot(self):
         pass
         

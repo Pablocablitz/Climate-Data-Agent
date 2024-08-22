@@ -7,6 +7,7 @@ from geopy.geocoders import Nominatim
 import random
 import string
 import xarray as xr
+from datetime import datetime
 
 class EORequest():
     def __init__(self):
@@ -30,6 +31,13 @@ class EORequest():
         self.data = None
         self._instance_attributes = []
         self.errors = []
+        
+    def post_process_request_variables(self):
+
+        if (self.request_analysis == 'predictions'):
+            self._check_timeframe_and_modify()
+        
+        self._get_coordinates_from_location()
 
     def __check_validity_of_request(self):
         self.errors = []
@@ -124,7 +132,7 @@ class EORequest():
         # Remove 'v10' and 'u10' from the dataset
         self.data = self.data.drop_vars(['v10', 'u10'])
         
-    def get_coordinates_from_location(self, min_size: float = 10) -> dict:
+    def _get_coordinates_from_location(self, min_size: float = 10) -> dict:
         """Get a bounding box for a location using Google Maps Geocoding API with a minimum size."""
 
         apikey = ''.join(random.choice(string.ascii_letters + string.digits + string.punctuation) for _ in range(20))
@@ -168,20 +176,34 @@ class EORequest():
             logger.error("Location could not be detected.")
             return None
         
+    def _check_timeframe_and_modify(self):
+        start_date = datetime.strptime(self.timeframe[0], '%d/%m/%Y')
+        date_cap = datetime.strptime("31/12/2023", '%d/%m/%Y')
+        date_user = datetime.strptime(self.timeframe[1], '%d/%m/%Y')
+        
+        end_date = min(date_cap, date_user)
+        self.request_timeframe[1] = end_date.strftime('%d/%m/%Y')
+        difference = datetime.timedelta(start_date, end_date)
+        
+        if difference.years < 3:
+            missing_years = np.ceil(3 - difference.years) * -1
+            self.request_timeframe[0] = start_date.addYears(missing_years).strftime('%d/%m/%Y')
+        
+        
     def populate_dummy_data(self):
         self.request_type = ["True"]
-        self.request_location = ["London"]
-        self.request_timeframe = ["01/04/2023", "31/10/2023"]
+        self.request_location = ["Aachen"]
+        self.request_timeframe = ['01/01/2010', '31/12/2020']
         self.request_product = ["Temperature"]
         self.request_specific_product = ["2m temperature"]
-        self.request_analysis = ["basic_analysis"]
+        self.request_analysis = ["predictions"]
         self.request_visualisation = ["time_series"]
         self.request_valid = True
-        self.adjusted_bounding_box = [56.49, -5.09, 46.49, 4.91]
+        self.adjusted_bounding_box = [55.76, 1.09, 45.76, 11.09]
         self.original_bounding_box = {"north": 51.29, "south": 51.69, "east": -0.51, "west": 0.33}
         self.variable = "2m_temperature"
         self.variable_units = "\u00b0C"
-        self.variable_cmap = "coolwarm"
+        self.variable_cmap = "balance"
         self.variable_short_name = "t2m"
         self.variable_long_name = "2m temperature"
         
@@ -190,4 +212,4 @@ class EORequest():
         self.vmin = "-10"
         self.vmax = "40"
         
-        self.store_and_process_data(xr.open_dataset("ERA5_DEBUGMODE.grib", engine="cfgrib"))
+        self.store_and_process_data(xr.open_dataset("ERA5_prophet_training_file.grib", engine="cfgrib"))
