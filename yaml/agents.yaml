@@ -33,7 +33,7 @@ attributes:
     location_agent:
         expertise_area: "identifying location"
         task_description: "extract the location from the given request"
-        list_of_types: "Take one location into the list."
+        list_of_types: "Take one location into the list. If you can detect two locations take two locations to the list"
         response_type: |
             Please respond with only the JSON file format:
             {
@@ -67,6 +67,29 @@ attributes:
             - If no time interval is given, put 'None'.
         guideline_3: "Only answer with the JSON file without any other information."
         guideline_4: "Ensure the end date does not exceed the current date of 01/06/2024."
+    compare_timeframe_agent:
+        expertise_area: "identifying multiple time intervals"
+        task_description: "extract the start and end dates for multiple years or date ranges from the given request"
+        list_of_types: "Extract the exact start and end dates for each mentioned time frame from the prompt."
+        response_type: |
+            Please respond with only the JSON file format:
+            {
+            "time_intervals": 
+                ["start_date1(DD/MM/YYYY)", "end_date1(DD/MM/YYYY)", "start_date2(DD/MM/YYYY)", "end_date2(DD/MM/YYYY)"] or "None"
+            }
+        guideline_1: |
+            - If specific years are mentioned, extract the exact start and end dates for each year.
+            - For a year mentioned in the current year (2024), use 01/01/2024 for the start date and 01/06/2024 for the end date.
+            - For a past year, use 01/01/YYYY for the start date and 31/12/YYYY for the end date.
+            - If a specific date range is mentioned, extract the exact start and end dates for each range.
+            - If the prompt mentions a relative date range (e.g., 'last 30 days'), calculate the dates based on the current date, which is 01/06/2024.
+            - Ensure the end date does not exceed the current date of 01/06/2024.
+        guideline_2: |
+            - If multiple years are mentioned, provide the start and end dates for each year separately in the format:
+                01/01/YYYY, 31/12/YYYY for each year.
+            - If no time interval is given, put 'None'.
+        guideline_3: "Only answer with the JSON file without any other information."
+        guideline_4: "Ensure that the end dates do not exceed the current date of 01/06/2024."
 
 
     product_agent:

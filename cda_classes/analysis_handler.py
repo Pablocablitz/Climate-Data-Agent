@@ -26,7 +26,7 @@ class AnalysisHandler():
         minval, maxval = self.get_min_max_from_dataframe(df)
         
         return self.get_plot_from_dataframe(df, eo_request.variable_long_name + " [" + eo_request.variable_units + "]"), self.get_basic_analysis_string(
-            minval, 
+            minval,
             maxval,
             self.get_std_from_dataframe(df),
             eo_request.variable_units

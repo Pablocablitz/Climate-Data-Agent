@@ -7,7 +7,7 @@ from geopy.geocoders import Nominatim
 import random
 import string
 import xarray as xr
-from datetime import datetime
+from datetime import datetime, timedelta
 
 class EORequest():
     def __init__(self):
@@ -33,9 +33,12 @@ class EORequest():
         self.errors = []
         
     def post_process_request_variables(self):
+        self.request_timeframe[0] = self.parse_date(self.request_timeframe[0])
+        self.request_timeframe[1] = self.parse_date(self.request_timeframe[1])
 
-        if (self.request_analysis == 'predictions'):
+        if (self.request_analysis[0] == 'predictions'):
             self._check_timeframe_and_modify()
+            logger.info("checked for timeframe")
         
         self._get_coordinates_from_location()
 
@@ -175,25 +178,49 @@ class EORequest():
         else:
             logger.error("Location could not be detected.")
             return None
-        
+       
     def _check_timeframe_and_modify(self):
-        start_date = datetime.strptime(self.timeframe[0], '%d/%m/%Y')
+        start_date = self.request_timeframe[0]
         date_cap = datetime.strptime("31/12/2023", '%d/%m/%Y')
-        date_user = datetime.strptime(self.timeframe[1], '%d/%m/%Y')
-        
+        date_user = self.request_timeframe[1]
+
+        # Determine the end date
         end_date = min(date_cap, date_user)
         self.request_timeframe[1] = end_date.strftime('%d/%m/%Y')
-        difference = datetime.timedelta(start_date, end_date)
-        
-        if difference.years < 3:
-            missing_years = np.ceil(3 - difference.years) * -1
-            self.request_timeframe[0] = start_date.addYears(missing_years).strftime('%d/%m/%Y')
-        
+
+        # Calculate the difference in days
+        difference = (end_date - start_date).days - 2
+
+        # Convert the difference to years
+        years_diff = difference / 365.25 
+
+        # If the difference is less than 3 years, adjust the start date
+        if years_diff < 3:
+            missing_years = np.ceil(3 - years_diff)
+            # Calculate the new start date
+            new_start_date = start_date - timedelta(days=int(missing_years * 365.25))
+            
+            # Adjust new_start_date to the first day of the month
+            new_start_date = new_start_date.replace(day=1)
+            
+            self.request_timeframe[0] = new_start_date.strftime('%d/%m/%Y')
+    
+    def parse_date(self, date_str):
+        """Parse date from either 'dd/mm/yyyy' or 'yyyy-mm-dd' format."""
+        try:
+            # Try 'dd/mm/yyyy' format
+            return datetime.strptime(date_str, '%d/%m/%Y')
+        except ValueError:
+            # Fall back to 'yyyy-mm-dd' format
+            return datetime.strptime(date_str, '%Y-%m-%d')  
         
     def populate_dummy_data(self):
         self.request_type = ["True"]
         self.request_location = ["Aachen"]
         self.request_timeframe = ['01/01/2010', '31/12/2020']
+        self.request_timeframe[0] = datetime.strptime("01/01/2010", '%d/%m/%Y')
+        self.request_timeframe[1] = datetime.strptime("31/12/2020", '%d/%m/%Y')
+
         self.request_product = ["Temperature"]
         self.request_specific_product = ["2m temperature"]
         self.request_analysis = ["predictions"]

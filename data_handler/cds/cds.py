@@ -113,15 +113,15 @@ class ClimateDataStorageHandler():
 
                 
     def extract_years_from_dates(self):
-        start_date = datetime.strptime(self.timeframe[0], '%d/%m/%Y')
-        end_date = datetime.strptime(self.timeframe[1], '%d/%m/%Y')
+        start_date = self.timeframe[0]
+        end_date = self.timeframe[1]
 
         # One-liner to extract unique years and sort them
         self.years = sorted({str(year) for year in range(start_date.year, end_date.year + 1)})
         
     def extract_months_from_dates(self):
-        start_date = datetime.strptime(self.timeframe[0], '%d/%m/%Y')
-        end_date = datetime.strptime(self.timeframe[1], '%d/%m/%Y')
+        start_date = self.timeframe[0]
+        end_date = self.timeframe[1]
         
         self.months = sorted({str(month).zfill(2) for month in range(start_date.month, end_date.month + 1)})
         

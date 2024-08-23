@@ -10,17 +10,22 @@ from loguru import logger
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
+import torch
+import gc
 
 DEBUGMODE = False
 
 
 @st.cache_resource    
-def load_llm():
+def load_llm():        
+    torch.cuda.empty_cache()
+    gc.collect()
     llm = LargeLanguageModelProcessor()
     return llm
 
 class Chatbot():
     def __init__(self):
+
         self.llama3 = load_llm()
         self.prompt_manager = PromptManager(self.llama3)
         self.data_handler = DataHandler()
@@ -58,7 +63,10 @@ class Chatbot():
 
         # Step 5 - get analysis type
         self.request.request_analysis = self.prompt_manager.retrieve_information("analysis_agent", user_prompt)
-
+        # Step 5.1 - if one location and comparison is detected then try to find the two different time ranges 
+        if len(self.request.request_location) == 1 and self.request.request_analysis[0] == 'comparison':
+            self.request.request_timeframe = self.prompt_manager.retrieve_information("compare_timeframe_agent", user_prompt)
+        
         # Step 6 - get visualisation type
         self.request.request_visualisation = self.prompt_manager.retrieve_information("visualisation_agent", user_prompt)        
         
