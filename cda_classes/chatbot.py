@@ -13,7 +13,7 @@ import pandas as pd
 import torch
 import gc
 
-DEBUGMODE = False
+DEBUGMODE = True 
 
 
 @st.cache_resource    
@@ -63,10 +63,13 @@ class Chatbot():
 
         # Step 5 - get analysis type
         self.request.request_analysis = self.prompt_manager.retrieve_information("analysis_agent", user_prompt)
-        # Step 5.1 - if one location and comparison is detected then try to find the two different time ranges 
-        if len(self.request.request_location) == 1 and self.request.request_analysis[0] == 'comparison':
-            self.request.request_timeframe = self.prompt_manager.retrieve_information("compare_timeframe_agent", user_prompt)
-        
+        # Step 5.1 - if one location and comparison is detected then try to find the two different time ranges
+        if self.request.request_analysis[0] == 'comparison':
+            self.request.multi_loc_request = True
+            if len(self.request.request_location) == 1:
+                self.request.request_timeframe = self.prompt_manager.retrieve_information("compare_timeframe_agent", user_prompt)
+                self.request.multi_time_request = True
+            
         # Step 6 - get visualisation type
         self.request.request_visualisation = self.prompt_manager.retrieve_information("visualisation_agent", user_prompt)        
         
@@ -117,7 +120,11 @@ class Chatbot():
                 self.request.populate_dummy_data()
                 # self.vis_handler.output_path = "results/animation_DEBUGMODE.mp4"
             else:
-                self.data_handler.construct_request(self.request)
+                if self.request.multi_loc_request == True: 
+                    self.data_handler.construct_multi_request(self.request)
+                else:
+                    self.data_handler.single_construct_request(self.request)
+                    
                 self.data_handler.download("ERA5")
                 self.request.store_and_process_data(self.data_handler.data)
                 animation = self.vis_handler.visualise_data(self.request)

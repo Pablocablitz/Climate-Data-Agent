@@ -74,7 +74,7 @@ attributes:
         response_type: |
             Please respond with only the JSON file format:
             {
-            "time_intervals": 
+            "time_intervals":
                 ["start_date1(DD/MM/YYYY)", "end_date1(DD/MM/YYYY)", "start_date2(DD/MM/YYYY)", "end_date2(DD/MM/YYYY)"] or "None"
             }
         guideline_1: |
@@ -84,6 +84,7 @@ attributes:
             - If a specific date range is mentioned, extract the exact start and end dates for each range.
             - If the prompt mentions a relative date range (e.g., 'last 30 days'), calculate the dates based on the current date, which is 01/06/2024.
             - Ensure the end date does not exceed the current date of 01/06/2024.
+            - The maximum are two different time ranges
         guideline_2: |
             - If multiple years are mentioned, provide the start and end dates for each year separately in the format:
                 01/01/YYYY, 31/12/YYYY for each year.

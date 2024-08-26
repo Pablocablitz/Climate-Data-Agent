@@ -19,33 +19,38 @@ class ClimateDataStorageHandler():
         logger.info("Successfully log to Climate Data Store")
         self.load_request_format()
         self.years = []
+        self.requests = []
         self.variable = None
         
     def construct_request(self, eo_request: EORequest):
         
         self.cds_request_format = self.request_format["cds_request"]["request"]
-        self.location = eo_request.request_location
-        self.timeframe = eo_request.request_timeframe
-        self.product = eo_request.request_product
-        self.specific_product = eo_request.request_specific_product
-    
+        for area in eo_request.adjusted_bounding_box:
+            
+            request = self.cds_request_format.copy()
+            self.timeframe = eo_request.request_timeframe
+            self.product = eo_request.request_product
+            self.specific_product = eo_request.request_specific_product
+        
 
-        self.variables = eo_request.variables
+            self.variables = eo_request.variables
+            
+            self.extract_years_from_dates(eo_request.multi_time_request)
+            self.extract_months_from_dates()
+            
+            request["variable"] = eo_request.variable
+            request["year"] = self.years
+            request["month"] = self.months
+            request["area"] = area
+            self.datatype = self.cds_request_format["data_format"]
+            self.requests.append(request)
         
-        self.extract_years_from_dates()
-        self.extract_months_from_dates()
-        
-        self.cds_request_format["variable"] = eo_request.variable
-        self.cds_request_format["year"] = self.years
-        self.cds_request_format["month"] = self.months
-        self.cds_request_format["area"] = eo_request.adjusted_bounding_box
-        self.datatype = self.cds_request_format["data_format"]
-        
-    def get_data(self):
-        request = self.cds_request_format
-        name = self.request_format["cds_request"]["name"]
-        print(request, name)
-        self.result = self.client.retrieve(name, request)
+    def get_data(self, filename):
+        for request in self.requests:
+            name = self.request_format["cds_request"]["name"]
+            print(request, name)
+            self.result = self.client.retrieve(name, request)
+            self.download(filename)
     
     def download(self, filename):
         """
@@ -53,6 +58,8 @@ class ClimateDataStorageHandler():
         self.filename = f"{filename}.{self.datatype}"
         self.result.download(self.filename)
     
+    
+    # TODO implement a method to process all Downloaded datasets
     def process(self):
         """
         Process the downloaded data.
@@ -70,58 +77,27 @@ class ClimateDataStorageHandler():
 
         self.ds = ds
         
-    
-    def calculate_monthly_means(self):
-        """
-        Calculate monthly mean values for a specified variable from the processed dataset.
-        
-        Parameters:
-            ds (xarray.Dataset): The processed dataset.
-            variable_name (str): The name of the variable to calculate the mean for.
-
-        Returns:
-            months (list): List of months (formatted as 'YYYY-MM').
-            monthly_means (list): List of monthly mean values.
-        """
-        obbox = self.original_bounding_box
-        
-        north = obbox['north']
-        south = obbox['south']
-        east = obbox['east']
-        west = obbox['west']
-
-        # Filter the dataset for the original bounding box
-        ds_filtered = self.ds.sel(latitude=slice(south, north), longitude=slice(west, east))
-        
-        if ds_filtered['latitude'].size == 0 or ds_filtered['longitude'].size == 0:
-            logger.warning("Filtered dataset is empty using the exact original bounding box. Trying to include nearest points.")
-
-            # Get the nearest latitude and longitude points
-            nearest_lat = self.ds['latitude'].sel(latitude=[south, north], method='nearest')
-            nearest_lon = self.ds['longitude'].sel(longitude=[west, east], method='nearest')
-
-            # Perform the nearest neighbor selection
-            ds_filtered = self.ds.sel(latitude=nearest_lat, longitude=nearest_lon)
-            # Check dimensions of t2m
-            logger.debug(f"Nearest point filtered dataset dimensions: {ds_filtered.dims}")
-            logger.debug(f"Nearest point filtered dataset latitude range: {ds_filtered['latitude'].min().item()} to {ds_filtered['latitude'].max().item()}")
-            logger.debug(f"Nearest point filtered dataset longitude range: {ds_filtered['longitude'].min().item()} to {ds_filtered['longitude'].max().item()}")
-                        
-        # Extract year and month from time coordinates for labeling
-        self.months = ds_filtered['time'].dt.strftime('%Y-%m').values
-        self.monthly_means = ds_filtered[self.variable_names].groupby('time.month').mean(dim=['latitude', 'longitude']).values
-
                 
-    def extract_years_from_dates(self):
-        start_date = self.timeframe[0]
-        end_date = self.timeframe[1]
+    def extract_years_from_dates(self, multi_time_ranges):
+        years = set()
+        if multi_time_ranges == True:
+            for i in range(0, len(self.timeframe), 2):
+                start_date = datetime.strptime(self.timeframe[i], '%d/%m/%Y')
+                end_date = datetime.strptime(self.timeframe[i+1], '%d/%m/%Y')
+                
+                # Add each year in the range to the set
+                for year in range(start_date.year, end_date.year + 1):
+                    years.add(year)
+        else:    
+            start_date = datetime.strptime(self.timeframe[0], '%d/%m/%Y')
+            end_date = datetime.strptime(self.timeframe[1], '%d/%m/%Y')
 
         # One-liner to extract unique years and sort them
-        self.years = sorted({str(year) for year in range(start_date.year, end_date.year + 1)})
+            self.years = sorted({str(year) for year in range(start_date.year, end_date.year + 1)})
         
     def extract_months_from_dates(self):
-        start_date = self.timeframe[0]
-        end_date = self.timeframe[1]
+        start_date = datetime.strptime(self.timeframe[0], '%d/%m/%Y')
+        end_date = datetime.strptime(self.timeframe[1], '%d/%m/%Y')
         
         self.months = sorted({str(month).zfill(2) for month in range(start_date.month, end_date.month + 1)})
         

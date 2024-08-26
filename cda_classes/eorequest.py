@@ -19,28 +19,32 @@ class EORequest():
         self.request_analysis = None
         self.request_visualisation = None
         self.request_valid = False
+        
         self.variables = None
-        self.adjusted_bounding_box = None
-        self.original_bounding_box = None
+        self.adjusted_bounding_box = []
+        self.original_bounding_box = []
         self.variable = None
         self.variable_units = None
         self.variable_cmap = None
         self.variable_short_name = None
         self.variable_long_name = None
-
+        self.multi_loc_request = False
+        self.multi_time_request = False
         self.data = None
         self._instance_attributes = []
         self.errors = []
         
     def post_process_request_variables(self):
-        self.request_timeframe[0] = self.parse_date(self.request_timeframe[0])
-        self.request_timeframe[1] = self.parse_date(self.request_timeframe[1])
+                
+        for i in range(len(self.request_timeframe)):
+            self.request_timeframe[i] = self.parse_date(self.request_timeframe[i])
 
         if (self.request_analysis[0] == 'predictions'):
             self._check_timeframe_and_modify()
             logger.info("checked for timeframe")
         
-        self._get_coordinates_from_location()
+        for i in range(len(self.request_location)):
+            self.adjusted_bounding_box[i], self.original_bounding_box[i] = self._get_coordinates_from_location(self.request_location[i])
 
     def __check_validity_of_request(self):
         self.errors = []
@@ -135,16 +139,16 @@ class EORequest():
         # Remove 'v10' and 'u10' from the dataset
         self.data = self.data.drop_vars(['v10', 'u10'])
         
-    def _get_coordinates_from_location(self, min_size: float = 10) -> dict:
+    def _get_coordinates_from_location(self,request_location, min_size: float = 10) -> dict:
         """Get a bounding box for a location using Google Maps Geocoding API with a minimum size."""
 
         apikey = ''.join(random.choice(string.ascii_letters + string.digits + string.punctuation) for _ in range(20))
         geolocator = Nominatim(user_agent = apikey)
-        geocode_result = geolocator.geocode(self.request_location)
+        geocode_result = geolocator.geocode(request_location)
         
         if geocode_result:
             viewport = geocode_result.raw['boundingbox']
-            self.original_bounding_box = {
+            original_bounding_box = {
                 "north": round(float(viewport[0]), 2),
                 "south": round(float(viewport[1]), 2),
                 "east": round(float(viewport[2]), 2),
@@ -152,10 +156,10 @@ class EORequest():
             }
             
             # Calculate the initial size of the bounding box
-            north = self.original_bounding_box["north"]
-            south = self.original_bounding_box["south"]
-            east = self.original_bounding_box["east"]
-            west = self.original_bounding_box["west"]
+            north = original_bounding_box["north"]
+            south = original_bounding_box["south"]
+            east = original_bounding_box["east"]
+            west = original_bounding_box["west"]
 
             lat_diff = north - south
             lng_diff = east - west
@@ -171,8 +175,9 @@ class EORequest():
                 east = round(mid_lng + (min_size / 2), 2)
                 west = round(mid_lng - (min_size / 2), 2)
                 
-            self.adjusted_bounding_box = [north, west, south, east]
+            adjusted_bounding_box = [north, west, south, east]
 
+            return adjusted_bounding_box, original_bounding_box
 
 
         else:
