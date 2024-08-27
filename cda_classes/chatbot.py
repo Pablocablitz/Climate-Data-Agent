@@ -13,7 +13,7 @@ import pandas as pd
 import torch
 import gc
 
-DEBUGMODE = True 
+DEBUGMODE = False
 
 
 @st.cache_resource    
@@ -69,6 +69,7 @@ class Chatbot():
             if len(self.request.request_location) == 1:
                 self.request.request_timeframe = self.prompt_manager.retrieve_information("compare_timeframe_agent", user_prompt)
                 self.request.multi_time_request = True
+                self.request.multi_loc_request = False
             
         # Step 6 - get visualisation type
         self.request.request_visualisation = self.prompt_manager.retrieve_information("visualisation_agent", user_prompt)        
@@ -120,17 +121,12 @@ class Chatbot():
                 self.request.populate_dummy_data()
                 # self.vis_handler.output_path = "results/animation_DEBUGMODE.mp4"
             else:
-                if self.request.multi_loc_request == True: 
-                    self.data_handler.construct_multi_request(self.request)
-                else:
-                    self.data_handler.single_construct_request(self.request)
+                self.data_handler.construct_request(self.request)
+
                     
                 self.data_handler.download("ERA5")
                 self.request.store_and_process_data(self.data_handler.data)
                 animation = self.vis_handler.visualise_data(self.request)
-                self.vis_handler.visualise_data(self.request)
-
-
             
         
         analysis_type = self.request.request_analysis[0]        
@@ -150,7 +146,7 @@ class Chatbot():
                     figure, message = self.analysis_handler.significant_event_detection(self.request)
 
                 case _:
-                    message = "Unexpected type of analysis provided! Received:" + self.request.analysis
+                    message = "Unexpected type of analysis provided! Received:" + analysis_type
                     logger.error(message)
             
             with st.chat_message("assistant"):    

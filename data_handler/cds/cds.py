@@ -21,20 +21,21 @@ class ClimateDataStorageHandler():
         self.years = []
         self.requests = []
         self.variable = None
+        self.processed_datasets = {}
+
         
     def construct_request(self, eo_request: EORequest):
         
         self.cds_request_format = self.request_format["cds_request"]["request"]
+        i = 0
         for area in eo_request.adjusted_bounding_box:
             
             request = self.cds_request_format.copy()
             self.timeframe = eo_request.request_timeframe
             self.product = eo_request.request_product
             self.specific_product = eo_request.request_specific_product
-        
-
             self.variables = eo_request.variables
-            
+            self.location = eo_request.request_location
             self.extract_years_from_dates(eo_request.multi_time_request)
             self.extract_months_from_dates()
             
@@ -46,21 +47,28 @@ class ClimateDataStorageHandler():
             self.requests.append(request)
         
     def get_data(self, filename):
-        for request in self.requests:
+        i = 0
+        file_names = ['/home/eouser/programming/Climate-Data-Agent/ERA5_Rome.grib','/home/eouser/programming/Climate-Data-Agent/ERA5_London.grib']
+        # for request in self.requests:
+        for file in file_names:
             name = self.request_format["cds_request"]["name"]
-            print(request, name)
-            self.result = self.client.retrieve(name, request)
-            self.download(filename)
+            # print(request, name)
+            # result = self.client.retrieve(name, request)
+            # self.download(filename, self.location[i], result)
+            ds = self.process(file)
+            self.processed_datasets[self.location[i]] = ds
+            i+=1
+            print(i)
     
-    def download(self, filename):
+    def download(self, filename, location, result):
         """
         """
-        self.filename = f"{filename}.{self.datatype}"
-        self.result.download(self.filename)
+        self.filename = f"{filename}_{location}.{self.datatype}"
+        result.download(self.filename)
     
     
     # TODO implement a method to process all Downloaded datasets
-    def process(self):
+    def process(self, file):
         """
         Process the downloaded data.
         
@@ -69,35 +77,35 @@ class ClimateDataStorageHandler():
         """
         
         if self.datatype == "netcdf":
-            ds = xr.open_dataset(self.filename, engine='netcdf4')
+            ds = xr.open_dataset(file, engine='netcdf4')
         elif self.datatype == "grib":
-            ds = xr.open_dataset(self.filename, engine="cfgrib")
+            ds = xr.open_dataset(file, engine="cfgrib")
         else:
             raise ValueError(f"Unsupported format: {self.datatype}")
 
-        self.ds = ds
+        return ds
         
                 
     def extract_years_from_dates(self, multi_time_ranges):
         years = set()
         if multi_time_ranges == True:
             for i in range(0, len(self.timeframe), 2):
-                start_date = datetime.strptime(self.timeframe[i], '%d/%m/%Y')
-                end_date = datetime.strptime(self.timeframe[i+1], '%d/%m/%Y')
+                start_date = self.timeframe[i]
+                end_date = self.timeframe[i+1]
                 
                 # Add each year in the range to the set
                 for year in range(start_date.year, end_date.year + 1):
                     years.add(year)
         else:    
-            start_date = datetime.strptime(self.timeframe[0], '%d/%m/%Y')
-            end_date = datetime.strptime(self.timeframe[1], '%d/%m/%Y')
+            start_date = self.timeframe[0]
+            end_date = self.timeframe[1]
 
         # One-liner to extract unique years and sort them
             self.years = sorted({str(year) for year in range(start_date.year, end_date.year + 1)})
         
     def extract_months_from_dates(self):
-        start_date = datetime.strptime(self.timeframe[0], '%d/%m/%Y')
-        end_date = datetime.strptime(self.timeframe[1], '%d/%m/%Y')
+        start_date = self.timeframe[0]
+        end_date = self.timeframe[1]
         
         self.months = sorted({str(month).zfill(2) for month in range(start_date.month, end_date.month + 1)})
         

@@ -31,10 +31,6 @@ class AnalysisHandler():
             self.get_std_from_dataframe(df),
             eo_request.variable_units
         )
-        self.calculate_monthly_means(eo_request)
-        return self.calculate_monthly_means(eo_request)
-    
-        return stringtoprint, plot
 
     def significant_event_detection(self, eo_request: EORequest):
         # * Outlier/Anomaly detection
@@ -107,15 +103,21 @@ class AnalysisHandler():
         
         return fig, message
         
-        
-        logger.warning("Attempted to perform predictions, but this is not implemented yet!")
-
+    
     def comparison(self, eo_request: EORequest):
-        logger.warning("Attempted comparison of two datasets, but this is not implemented yet!")
+        if eo_request.multi_loc_request == True:
+            dataframe = self.get_dataframes_from_multi_eorequest(eo_request)
+            fig = self.get_plotly_figure_multi(dataframe)
+            message = f"Comparing the locations {eo_request.request_location[0]} and {eo_request.request_location[1]}"
+            return fig, message
+        elif eo_request.multi_time_request == True:
+            message = f"Comparing the two time ranges {eo_request.request_timeframe[0]}-{eo_request.request_timeframe[1]} and {eo_request.request_timeframe[2]}-{eo_request.request_timeframe[3]} of the location {eo_request.request_location[0]} "
+            fig = "placeholder"
+            return fig, message
         
     def _get_dataframe_from_eorequest(self, eo_request: EORequest):
         
-        ds_filtered = self._get_filtered_dataset(eo_request)
+        ds_filtered = self._get_filtered_dataset(eo_request)[0]
         
         # Extract year and month from time coordinates for labeling
         #months = ds_filtered['time'].dt.strftime('%Y-%m-%d').values
@@ -131,33 +133,42 @@ class AnalysisHandler():
     
     def _get_filtered_dataset(self, eo_request: EORequest):
         
-        ds = eo_request.data.sel(time=slice("2018-01-01", "2020-12-31"))
+        start_date = eo_request.request_timeframe[0].strftime('%Y-%m-%d')
+        end_date = eo_request.request_timeframe[1].strftime('%Y-%m-%d')
+        # Select time range first
+        ds = eo_request.data.sel(time=slice(start_date, end_date))
         
-        obbox = eo_request.original_bounding_box
+        filtered_datasets = []
         
-        north = obbox['north']
-        south = obbox['south']
-        east = obbox['east']
-        west = obbox['west']
-
-        # Filter the dataset for the original bounding box
-        ds_filtered = ds.sel(latitude=slice(south, north), longitude=slice(west, east))
-        
-        if ds_filtered['latitude'].size == 0 or ds_filtered['longitude'].size == 0:
-            logger.warning("Filtered dataset is empty using the exact original bounding box. Trying to include nearest points.")
-
-            # Get the nearest latitude and longitude points
-            nearest_lat = ds['latitude'].sel(latitude=[south, north], method='nearest')
-            nearest_lon = ds['longitude'].sel(longitude=[west, east], method='nearest')
-
-            # Perform the nearest neighbor selection
-            ds_filtered = ds.sel(latitude=nearest_lat, longitude=nearest_lon)
-            # Check dimensions of t2m
-            logger.debug(f"Nearest point filtered dataset dimensions: {ds_filtered.dims}")
-            logger.debug(f"Nearest point filtered dataset latitude range: {ds_filtered['latitude'].min().item()} to {ds_filtered['latitude'].max().item()}")
-            logger.debug(f"Nearest point filtered dataset longitude range: {ds_filtered['longitude'].min().item()} to {ds_filtered['longitude'].max().item()}")
-        
-        return ds_filtered
+        # Loop through each bounding box corresponding to different locations
+        for obbox in eo_request.original_bounding_box:
+            north = obbox['north']
+            south = obbox['south']
+            east = obbox['east']
+            west = obbox['west']
+            
+            # Filter the dataset for the current bounding box
+            ds_filtered = ds.sel(latitude=slice(south, north), longitude=slice(west, east))
+            
+            if ds_filtered['latitude'].size == 0 or ds_filtered['longitude'].size == 0:
+                logger.warning("Filtered dataset is empty using the exact original bounding box. Trying to include nearest points.")
+                
+                # Get the nearest latitude and longitude points
+                nearest_lat = ds['latitude'].sel(latitude=[south, north], method='nearest')
+                nearest_lon = ds['longitude'].sel(longitude=[west, east], method='nearest')
+                
+                # Perform the nearest neighbor selection
+                ds_filtered = ds.sel(latitude=nearest_lat, longitude=nearest_lon)
+                
+                # Log details about the nearest point selection
+                logger.debug(f"Nearest point filtered dataset dimensions: {ds_filtered.dims}")
+                logger.debug(f"Nearest point filtered dataset latitude range: {ds_filtered['latitude'].min().item()} to {ds_filtered['latitude'].max().item()}")
+                logger.debug(f"Nearest point filtered dataset longitude range: {ds_filtered['longitude'].min().item()} to {ds_filtered['longitude'].max().item()}")
+            
+            # Append the filtered dataset for this location
+            filtered_datasets.append(ds_filtered)
+            
+        return filtered_datasets
         
     def get_monthly_mean_dataframe(self, eo_request: EORequest):
         """
@@ -171,7 +182,7 @@ class AnalysisHandler():
             months (list): List of months (formatted as 'YYYY-MM').
             monthly_means (list): List of monthly mean values.
         """
-        ds_filtered = self._get_filtered_dataset(eo_request)
+        ds_filtered = self._get_filtered_dataset(eo_request)[0]
                         
         # Extract year and month from time coordinates for labeling
         months = ds_filtered['time'].dt.strftime('%Y-%m-%d').values
@@ -218,3 +229,49 @@ class AnalysisHandler():
              'unit': unit})        
                
         return constructed_string
+    
+    def get_dataframes_from_multi_eorequest(self, eo_request: EORequest):
+        filtered_datasets = self._get_filtered_dataset(eo_request)
+        
+        dataframes = []
+        
+        for idx, dataset in enumerate(filtered_datasets):
+            months = dataset['time'].dt.strftime('%Y-%m-%d').values
+            monthly_means = dataset[eo_request.variable_short_name].groupby('time.month').mean(dim=['latitude', 'longitude']).values
+            
+            df = pd.DataFrame({
+                f'time_{idx + 1}': months,
+                f'value_{idx + 1}': monthly_means
+            })
+            
+            dataframes.append(df)
+        
+        return dataframes[0], dataframes[1]
+    
+    def get_plotly_figure_multi(dataframes, variable_name):
+        # Define a list of colors for the plots
+        colors = ['blue', 'red']  # You can choose any colors you like
+
+        # Create the Plotly figure
+        fig = go.Figure()
+
+        # Loop over the dataframes and add each one as a trace with a different color
+        for idx, df in enumerate(dataframes):
+            fig.add_trace(go.Scatter(
+                x=df[f'time_{idx + 1}'],
+                y=df[f'value_{idx + 1}'],
+                mode='lines+markers',
+                name=f'Dataset {idx + 1}',
+                line=dict(color=colors[idx])  # Set the color for each trace
+            ))
+
+        # Customize layout
+        fig.update_layout(
+            title='Monthly Means Comparison',
+            xaxis_title='Time',
+            yaxis_title=variable_name,
+            legend_title='Datasets',
+            template='plotly'
+        )
+        
+        return fig

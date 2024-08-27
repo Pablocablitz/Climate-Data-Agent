@@ -43,8 +43,10 @@ class EORequest():
             self._check_timeframe_and_modify()
             logger.info("checked for timeframe")
         
-        for i in range(len(self.request_location)):
-            self.adjusted_bounding_box[i], self.original_bounding_box[i] = self._get_coordinates_from_location(self.request_location[i])
+        for location in self.request_location:
+            adjusted_box, original_box = self._get_coordinates_from_location(location)
+            self.adjusted_bounding_box.append(adjusted_box)
+            self.original_bounding_box.append(original_box)
 
     def __check_validity_of_request(self):
         self.errors = []
@@ -94,8 +96,10 @@ class EORequest():
         return Utilities.load_config_file("yaml/variables.yaml") 
     
     def store_and_process_data(self, data):
-        self.data = data
-
+        if len(self.request_location)>1:
+            self.data = xr.concat([data[self.request_location[0]], data[self.request_location[1]]], dim='new_dim')
+        else:
+            self.data = data[self.request_location[0]]
         
         self._process_data()
         
