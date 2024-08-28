@@ -102,13 +102,21 @@ class VisualisationHandler():
     
     def generate_plotly_animation(self, eorequest: EORequest):    
         df = eorequest.data.to_dataarray().to_dataframe(name=eorequest.variable_long_name).reset_index()
-        
         df = df.dropna(subset=[eorequest.variable_long_name])
-
+        
+        max_lat = df['latitude'].max()
+        min_lat = df['latitude'].min()
+        max_lon = df['longitude'].max()
+        min_lon = df['longitude'].min()
+        
+        center_lat = min_lat + (max_lat - min_lat) * 0.5
+        center_lon = min_lon + (max_lon - min_lon) * 0.5
+        
+        
         figure = px.density_mapbox(df, lat=df['latitude'], lon=df['longitude'], z=df[eorequest.variable_long_name],
                                         radius=8, animation_frame="valid_time", opacity = 0.5, color_continuous_scale =eorequest.variable_cmap,
                                         width = 640, height = 500, range_color=[int(eorequest.vmin),int(eorequest.vmax)])
-        figure.update_layout(mapbox_style="carto-positron", mapbox_zoom=3, mapbox_center = {"lat": 52.3, "lon": 1.3712})
+        figure.update_layout(mapbox_style="carto-positron", mapbox_zoom=4.5, mapbox_center = {"lat": center_lat, "lon": center_lon})
 
         figure.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
         

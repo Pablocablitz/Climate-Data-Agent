@@ -107,7 +107,7 @@ class AnalysisHandler():
     def comparison(self, eo_request: EORequest):
         if eo_request.multi_loc_request == True:
             dataframe = self.get_dataframes_from_multi_eorequest(eo_request)
-            fig = self.get_plotly_figure_multi(dataframe)
+            fig = self.get_plotly_figure_multi(dataframe, eo_request.variable_long_name, eo_request.request_location)
             message = f"Comparing the locations {eo_request.request_location[0]} and {eo_request.request_location[1]}"
             return fig, message
         elif eo_request.multi_time_request == True:
@@ -232,12 +232,12 @@ class AnalysisHandler():
     
     def get_dataframes_from_multi_eorequest(self, eo_request: EORequest):
         filtered_datasets = self._get_filtered_dataset(eo_request)
-        
+                
         dataframes = []
         
         for idx, dataset in enumerate(filtered_datasets):
             months = dataset['time'].dt.strftime('%Y-%m-%d').values
-            monthly_means = dataset[eo_request.variable_short_name].groupby('time.month').mean(dim=['latitude', 'longitude']).values
+            monthly_means = dataset[eo_request.variable_short_name].sel(new_dim=idx).groupby('time.month').mean(dim=['latitude', 'longitude']).values
             
             df = pd.DataFrame({
                 f'time_{idx + 1}': months,
@@ -246,9 +246,9 @@ class AnalysisHandler():
             
             dataframes.append(df)
         
-        return dataframes[0], dataframes[1]
+        return dataframes
     
-    def get_plotly_figure_multi(dataframes, variable_name):
+    def get_plotly_figure_multi(self, dataframes, variable_name, locations):
         # Define a list of colors for the plots
         colors = ['blue', 'red']  # You can choose any colors you like
 
@@ -261,7 +261,7 @@ class AnalysisHandler():
                 x=df[f'time_{idx + 1}'],
                 y=df[f'value_{idx + 1}'],
                 mode='lines+markers',
-                name=f'Dataset {idx + 1}',
+                name=f'{locations[idx]}',
                 line=dict(color=colors[idx])  # Set the color for each trace
             ))
 

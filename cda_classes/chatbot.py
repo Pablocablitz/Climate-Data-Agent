@@ -12,6 +12,7 @@ import plotly.graph_objects as go
 import pandas as pd
 import torch
 import gc
+import uuid
 
 DEBUGMODE = False
 
@@ -25,7 +26,6 @@ def load_llm():
 
 class Chatbot():
     def __init__(self):
-
         self.llama3 = load_llm()
         self.prompt_manager = PromptManager(self.llama3)
         self.data_handler = DataHandler()
@@ -84,16 +84,17 @@ class Chatbot():
             self.prompt_manager.callback_assistant_to_user("review_agent", user_prompt, self.request)
             with st.chat_message("assistant"):
                 st.write(self.prompt_manager.callback)
-                st.session_state.messages.append({"role": "assistant", "content": self.prompt_manager.callback})
+                st.session_state.messages.append({"role": "assistant", "request_info": self.prompt_manager.callback})
             pass    
         else:
             with st.chat_message("assistant"):
                 self.prompt_manager.callback_assistant_to_user("missing_info_agent", user_prompt, self.request.errors)
                 st.write(self.prompt_manager.callback)
-                st.session_state.messages.append({"role": "assistant", "content": self.prompt_manager.callback})
+                st.session_state.messages.append({"role": "assistant", "request_info": self.prompt_manager.callback})
                 st.stop()
 
     def process_request(self, user_prompt): 
+                
         if (not DEBUGMODE):
             self.extract_information(user_prompt)
 
@@ -149,28 +150,37 @@ class Chatbot():
                     message = "Unexpected type of analysis provided! Received:" + analysis_type
                     logger.error(message)
             
-            with st.chat_message("assistant"):    
+            with st.chat_message("assistant"):
+                analysis_header = f"{self.request.request_analysis[0].capitalize()}"
+                st.header(analysis_header)
                 st.write(message)
-                st.session_state.messages.append({"role": "assistant", "content": message})
                 
                 if (figure):
                     st.plotly_chart(figure)
-                    st.session_state.messages.append({"role": "assistant", "plotly_chart": figure})
+                    st.session_state.messages.append({"role": "assistant", "analysis":{"analysis_header":analysis_header,"analysis_message": message, "plotly_chart": figure}})
 
 
-        
 
         else:
             logger.info("No analysis type was present.")
-            
         with st.chat_message("assistant"):
-            # st.write(response)
-            if animation:
-                st.plotly_chart(animation)
-                pass
+            st.write("To view the animation, please use the optional generation button. Kindly be aware that loading may take some time. Also, if you search for new content while the animation is displayed, it will not be retained in your history due to the large loading process.")
+            animation_header = f"Animation for locations: {', '.join(self.request.request_location)}"
+            if st.button("Generate Animation", on_click = self.output_animation(animation, animation_header)):
+                st.write("your animation")
+                
         
-        st.session_state.messages.append({"role": "assistant","plotly_chart": animation})
+                    
+                    
+        
+        # st.session_state.messages.append({"role": "assistant","animation_messages": { "animation" : animation, "button_state": button_clicked, "animation_header": animation_header}})
 
+    def output_animation(self, animation, animation_header):
+        st.header(animation_header)
+        # st.write(response)
+        
+        st.plotly_chart(animation)
+    
     def output_results(self):
         pass
     

@@ -34,6 +34,7 @@ class EORequest():
         self._instance_attributes = []
         self.errors = []
         
+        
     def post_process_request_variables(self):
                 
         for i in range(len(self.request_timeframe)):
@@ -143,7 +144,7 @@ class EORequest():
         # Remove 'v10' and 'u10' from the dataset
         self.data = self.data.drop_vars(['v10', 'u10'])
         
-    def _get_coordinates_from_location(self,request_location, min_size: float = 10) -> dict:
+    def _get_coordinates_from_location(self,request_location, min_size: float = 3) -> dict:
         """Get a bounding box for a location using Google Maps Geocoding API with a minimum size."""
 
         apikey = ''.join(random.choice(string.ascii_letters + string.digits + string.punctuation) for _ in range(20))
