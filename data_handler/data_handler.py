@@ -18,8 +18,8 @@ class DataHandler():
         pass    
     
 
-    def download(self, filename):
-        self.request_cds.get_data(filename)
+    def download(self):
+        self.request_cds.get_data()
         # self.request_cds.process()
         self.data = self.request_cds.processed_datasets
         # if (eo_request.datasource == "CDS"):

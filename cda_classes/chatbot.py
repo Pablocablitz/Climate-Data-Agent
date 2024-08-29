@@ -125,9 +125,9 @@ class Chatbot():
                 self.data_handler.construct_request(self.request)
 
                     
-                self.data_handler.download("ERA5")
+                self.data_handler.download()
                 self.request.store_and_process_data(self.data_handler.data)
-                animation = self.vis_handler.visualise_data(self.request)
+                self.animation = self.vis_handler.visualise_data(self.request)
             
         
         analysis_type = self.request.request_analysis[0]        
@@ -165,8 +165,8 @@ class Chatbot():
             logger.info("No analysis type was present.")
         with st.chat_message("assistant"):
             st.write("To view the animation, please use the optional generation button. Kindly be aware that loading may take some time. Also, if you search for new content while the animation is displayed, it will not be retained in your history due to the large loading process.")
-            animation_header = f"Animation for locations: {', '.join(self.request.request_location)}"
-            if st.button("Generate Animation", on_click = self.output_animation(animation, animation_header)):
+            self.animation_header = f"Animation for locations: {', '.join(self.request.request_location)}"
+            if st.button("Generate Animation", on_click = self.output_animation):
                 st.write("your animation")
                 
         
@@ -175,12 +175,9 @@ class Chatbot():
         
         # st.session_state.messages.append({"role": "assistant","animation_messages": { "animation" : animation, "button_state": button_clicked, "animation_header": animation_header}})
 
-    def output_animation(self, animation, animation_header):
-        st.header(animation_header)
-        # st.write(response)
-        
-        st.plotly_chart(animation)
-    
+    def output_animation(self):
+            st.session_state.click.append(True)
+            st.session_state.messages.append({"role": "assistant","animation_messages": { "animation" : self.animation, "animation_header": self.animation_header}})
     def output_results(self):
         pass
     

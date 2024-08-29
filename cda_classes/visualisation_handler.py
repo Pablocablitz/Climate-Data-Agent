@@ -119,6 +119,8 @@ class VisualisationHandler():
         figure.update_layout(mapbox_style="carto-positron", mapbox_zoom=4.5, mapbox_center = {"lat": center_lat, "lon": center_lon})
 
         figure.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
+        figure.layout.updatemenus[0].buttons[0].args[1]['frame']['duration'] = 30
+        figure.layout.updatemenus[0].buttons[0].args[1]['transition']['duration'] = 5
         
         return figure
     

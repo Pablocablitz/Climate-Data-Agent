@@ -46,25 +46,26 @@ class ClimateDataStorageHandler():
             self.datatype = self.cds_request_format["data_format"]
             self.requests.append(request)
         
-    def get_data(self, filename):
-        i = 0
-        file_names = ['/home/eouser/programming/Climate-Data-Agent/ERA5_Rome.grib','/home/eouser/programming/Climate-Data-Agent/ERA5_London.grib']
-        # for request in self.requests:
-        for file in file_names:
-            name = self.request_format["cds_request"]["name"]
-            # print(request, name)
-            # result = self.client.retrieve(name, request)
-            # self.download(filename, self.location[i], result)
-            ds = self.process(file)
-            self.processed_datasets[self.location[i]] = ds
-            i+=1
-            print(i)
+    def get_data(self):
+        
+        # file_names = ['/home/eouser/programming/Climate-Data-Agent/ERA5_Rome.grib','/home/eouser/programming/Climate-Data-Agent/ERA5_London.grib']
+        # for idx, request in enumerate(self.requests):
+        #     name = self.request_format["cds_request"]["name"]
+        #     print(request, name)
+        #     result = self.client.retrieve(name, request)
+        #     file = self.download("ERA_5", self.location[idx], result)
+        file = "/home/eouser/programming/Climate-Data-Agent/ERA_5_Rome.grib"
+        ds = self.process(file)
+        self.processed_datasets[self.location[0]] = ds
+
     
     def download(self, filename, location, result):
         """
         """
-        self.filename = f"{filename}_{location}.{self.datatype}"
-        result.download(self.filename)
+        filename = f"{filename}_{location}.{self.datatype}"
+        result.download(filename)
+        
+        return filename
     
     
     # TODO implement a method to process all Downloaded datasets
@@ -88,7 +89,9 @@ class ClimateDataStorageHandler():
                 
     def extract_years_from_dates(self, multi_time_ranges):
         years = set()
-        if multi_time_ranges == True:
+        
+        if multi_time_ranges:
+            # Iterate over pairs of dates if multi_time_ranges is True
             for i in range(0, len(self.timeframe), 2):
                 start_date = self.timeframe[i]
                 end_date = self.timeframe[i+1]
@@ -96,12 +99,17 @@ class ClimateDataStorageHandler():
                 # Add each year in the range to the set
                 for year in range(start_date.year, end_date.year + 1):
                     years.add(year)
-        else:    
+        else:
+            # Single time range case
             start_date = self.timeframe[0]
             end_date = self.timeframe[1]
-
-        # One-liner to extract unique years and sort them
-            self.years = sorted({str(year) for year in range(start_date.year, end_date.year + 1)})
+            
+            # Add each year in the range to the set
+            for year in range(start_date.year, end_date.year + 1):
+                years.add(year)
+        
+        # Sort years and convert to list of strings
+        self.years = sorted(str(year) for year in years)
         
     def extract_months_from_dates(self):
         start_date = self.timeframe[0]

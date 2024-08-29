@@ -22,11 +22,15 @@ class EOChatBot():
             st.session_state.messages = []
         if 'past_request' not in st.session_state:
             st.session_state.past_request = []
-        if "button_clicked" not in st.session_state:
-            st.session_state.button_clicked = {}
-            
+        if "click" not in st.session_state:
+            st.session_state.click = []
+
+        while len(st.session_state.click) < len(st.session_state.messages):
+            st.session_state.click.insert(0, False)
         
-        for message in st.session_state.messages:
+        for idx, message in enumerate(st.session_state.messages):
+            print(idx)
+            print(st.session_state.click)
             with st.chat_message(message["role"]):
                 if message.get("prompt"):
                     st.markdown(message["prompt"], unsafe_allow_html=True)
@@ -39,16 +43,22 @@ class EOChatBot():
                     st.header(analysis["analysis_header"])
                     st.write(analysis["analysis_message"])
                     st.plotly_chart(analysis["plotly_chart"])
-                                
+                    
+                elif st.session_state.click[idx] == True:
+                    print(idx)
+                    print(st.session_state.click)
                 # elif message.get("animation_messages"):
-                #     animation_messages = message["animation_messages"]
+                    animation_messages = message["animation_messages"]
                     
                 #     st.write("To view the animation, please use the optional generation button. Kindly be aware that loading may take some time. Also, if you search for new content while the animation is displayed, it will not be retained in your history due to the large loading process.")
                 #     button_state = animation_messages["button_state"]
                 #     if button_state:
-                #         st.header(animation_messages["animation_header"])
-                #         st.plotly_chart(animation_messages["animation"])
-                #         animation_messages["button_state"] = False
+                    st.header(animation_messages["animation_header"])
+                    st.plotly_chart(animation_messages["animation"])
+                    st.session_state.click[idx] = False
+                    del st.session_state.messages[idx]["animation_messages"]
+                    del st.session_state.messages[idx]
+                    print(st.session_state.messages)
 
 
                     
@@ -68,6 +78,7 @@ class EOChatBot():
             with button_col:
                 if st.button("Clear Chat"):
                     st.session_state.messages = []    
+                    st.session_state.click = []
                     st.rerun()                
                     
         if user_message:            

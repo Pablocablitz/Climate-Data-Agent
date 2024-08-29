@@ -106,13 +106,14 @@ class AnalysisHandler():
     
     def comparison(self, eo_request: EORequest):
         if eo_request.multi_loc_request == True:
-            dataframe = self.get_dataframes_from_multi_eorequest(eo_request)
-            fig = self.get_plotly_figure_multi(dataframe, eo_request.variable_long_name, eo_request.request_location)
+            dataframe_multi_loc = self.get_dataframes_from_multi_eorequest(eo_request)
+            fig = self.get_plotly_figure_multi(dataframe_multi_loc, eo_request.variable_long_name, eo_request.request_location)
             message = f"Comparing the locations {eo_request.request_location[0]} and {eo_request.request_location[1]}"
             return fig, message
         elif eo_request.multi_time_request == True:
+            dataframe_multi_time = self._get_dataframe_from_eorequest(eo_request)
             message = f"Comparing the two time ranges {eo_request.request_timeframe[0]}-{eo_request.request_timeframe[1]} and {eo_request.request_timeframe[2]}-{eo_request.request_timeframe[3]} of the location {eo_request.request_location[0]} "
-            fig = "placeholder"
+            fig = self.get_plotly_figure_multi(dataframe_multi_time, eo_request.variable_long_name, eo_request.request_location, eo_request.multi_time_request, eo_request.request_timeframe)
             return fig, message
         
     def _get_dataframe_from_eorequest(self, eo_request: EORequest):
@@ -134,7 +135,7 @@ class AnalysisHandler():
     def _get_filtered_dataset(self, eo_request: EORequest):
         
         start_date = eo_request.request_timeframe[0].strftime('%Y-%m-%d')
-        end_date = eo_request.request_timeframe[1].strftime('%Y-%m-%d')
+        end_date = eo_request.request_timeframe[-1].strftime('%Y-%m-%d')
         # Select time range first
         ds = eo_request.data.sel(time=slice(start_date, end_date))
         
@@ -193,12 +194,6 @@ class AnalysisHandler():
             'value': monthly_means
             })
         
-        monthly_means = df.groupby('time').mean()
-
-        max_value = monthly_means['value'].max()
-        
-        max_month = monthly_means['value'].idxmax()
-        
         return df
     
 
@@ -248,30 +243,96 @@ class AnalysisHandler():
         
         return dataframes
     
-    def get_plotly_figure_multi(self, dataframes, variable_name, locations):
-        # Define a list of colors for the plots
-        colors = ['blue', 'red']  # You can choose any colors you like
-
-        # Create the Plotly figure
+    def get_plotly_figure_multi(self, df, variable_name, locations, multi_time, years_to_compare):
+        
+        colors = ['blue', 'red', 'green', 'orange', 'purple', 'brown', 'pink', 'cyan']  # Extend if needed
         fig = go.Figure()
+        # Ensure the 'ds' column is in datetime format
+        
 
-        # Loop over the dataframes and add each one as a trace with a different color
-        for idx, df in enumerate(dataframes):
-            fig.add_trace(go.Scatter(
-                x=df[f'time_{idx + 1}'],
-                y=df[f'value_{idx + 1}'],
-                mode='lines+markers',
-                name=f'{locations[idx]}',
-                line=dict(color=colors[idx])  # Set the color for each trace
-            ))
+        # Loop over the years to compare and add each one as a trace with a different color
+        if multi_time:
+            if df['ds'].dtype == 'object':  # This checks if the column is of string type
+                df['ds'] = pd.to_datetime(df['ds'])
 
-        # Customize layout
-        fig.update_layout(
-            title='Monthly Means Comparison',
-            xaxis_title='Time',
-            yaxis_title=variable_name,
-            legend_title='Datasets',
-            template='plotly'
-        )
+            # Remove February 29 from leap years
+            df = df[~((df['ds'].dt.month == 2) & (df['ds'].dt.day == 29))]
+        
+        # Create a new column for the month to be used on the x-axis
+            df['month'] = df['ds'].dt.strftime('%b %d')
+            years = self.extract_years_from_dates(multi_time, years_to_compare)
+            
+            for i, year_str in enumerate(years):
+                year = int(year_str)
+                
+                # Filter dataframe for the current years
+                df_filtered = df[df['ds'].dt.year == year]
+                
+                # Add a trace for the filtered dataframe, using 'month' for the x-axis
+                fig.add_trace(go.Scatter(
+                    x=df_filtered['month'],
+                    y=df_filtered['y'],
+                    mode='lines',
+                    name=f'Year {year}',
+                    line=dict(color=colors[i % len(colors)]),
+                ))
+            
+            # Update layout
+            fig.update_layout(
+                title='Comparison of Different Years (Overlapped by Month)',
+                xaxis_title='Time',
+                yaxis_title=variable_name,
+                legend_title='Years',
+                xaxis=dict(
+                    tickmode='array',
+                    tickvals=[15, 45, 74, 105, 135, 166, 196, 227, 258, 288, 319, 349],
+                    ticktext=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    range=[1, 365]
+                )
+            )
+        else:
+            for idx, ds in enumerate(df):
+                fig.add_trace(go.Scatter(
+                    x=ds[f'time_{idx + 1}'],
+                    y=ds[f'value_{idx + 1}'],
+                    mode='lines',
+                    name=f'{locations[idx]}',
+                    line=dict(color=colors[idx])  # Set the color for each trace
+                ))
+
+            # Customize layout
+            fig.update_layout(
+                title='Monthly Means Comparison',
+                xaxis_title='Time',
+                yaxis_title=variable_name,
+                legend_title='Datasets',
+                template='plotly'
+            )
         
         return fig
+    
+    def extract_years_from_dates(self, multi_time_ranges, timeframe):
+        years = set()
+        
+        if multi_time_ranges:
+            # Iterate over pairs of dates if multi_time_ranges is True
+            for i in range(0, len(timeframe), 2):
+                start_date = timeframe[i]
+                end_date = timeframe[i+1]
+                
+                # Add each year in the range to the set
+                for year in range(start_date.year, end_date.year + 1):
+                    years.add(year)
+        else:
+            # Single time range case
+            start_date = timeframe[0]
+            end_date = timeframe[1]
+            
+            # Add each year in the range to the set
+            for year in range(start_date.year, end_date.year + 1):
+                years.add(year)
+        
+        # Sort years and convert to list of strings
+        years = sorted(str(year) for year in years)
+        
+        return years

@@ -64,11 +64,16 @@ class PromptManager():
         if agent_type == "specific_product_agent":
             system_prompt = system_prompt.format(specific_product_list = self.specific_product_list)
         elif agent_type == "review_agent":
+            timeframe_strings = [
+                f"[{', '.join(dt.strftime('%Y-%m-%d') for dt in self.request.request_timeframe)}]"
+            ]
+            
             system_prompt = f" \
-            I will search for the climate product for {self.request.request_location} \
-            covering the period {self.request.request_timeframe}. \
-            The primary focus is on the category '{self.request.request_product}', \
-            specifically looking at the variable '{self.request.request_specific_product}'."
+            I will search for the climate product for {', '.join(self.request.request_location)} \
+            covering the period {' and '.join(timeframe_strings)}. \
+            The primary focus is on the category '{self.request.request_product[0]}', \
+            specifically looking at the variable '{self.request.request_specific_product[0]}'.\
+            The analysis type being displayed is a '{self.request.request_analysis[0]}'."
         elif agent_type == "analysis_agent":
             temp_prompt = string.Template(system_prompt)
             system_prompt = temp_prompt.safe_substitute(
