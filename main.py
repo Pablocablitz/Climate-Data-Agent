@@ -16,7 +16,7 @@ class EOChatBot():
         self.chatbot = Chatbot()
 
     def run(self):
-
+        
         # streamlit chatbot interface with chat history
         if "messages" not in st.session_state:
             st.session_state.messages = []
@@ -60,7 +60,7 @@ class EOChatBot():
         if not st.session_state.messages:  
             with st.container(border=True):      
                 with st.chat_message('assistant'):
-                    st.write("Please look up first the documentation of the Climate Data Agent to asure the correct usecase!")
+                    st.write("Please refer to the Climate Data Agent documentation to ensure correct usage. Thank you!")
                     
 
 
@@ -97,7 +97,7 @@ class EOChatBot():
             }
             </style>
             """, unsafe_allow_html=True)
-        
+                
 
 
 
