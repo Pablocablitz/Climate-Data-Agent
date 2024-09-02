@@ -44,6 +44,7 @@ class EORequest():
             self._check_timeframe_and_modify()
             logger.info("checked for timeframe")
         
+
         for location in self.request_location:
             adjusted_box, original_box = self._get_coordinates_from_location(location)
             self.adjusted_bounding_box.append(adjusted_box)
@@ -196,7 +197,7 @@ class EORequest():
 
         # Determine the end date
         end_date = min(date_cap, date_user)
-        self.request_timeframe[1] = end_date.strftime('%d/%m/%Y')
+        self.request_timeframe[-1] = end_date
 
         # Calculate the difference in days
         difference = (end_date - start_date).days - 2
@@ -213,7 +214,7 @@ class EORequest():
             # Adjust new_start_date to the first day of the month
             new_start_date = new_start_date.replace(day=1)
             
-            self.request_timeframe[0] = new_start_date.strftime('%d/%m/%Y')
+            self.request_timeframe[0] = new_start_date
     
     def parse_date(self, date_str):
         """Parse date from either 'dd/mm/yyyy' or 'yyyy-mm-dd' format."""

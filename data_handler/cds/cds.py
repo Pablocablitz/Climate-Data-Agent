@@ -49,17 +49,17 @@ class ClimateDataStorageHandler():
     def get_data(self):
         
         # file_names = ['/home/eouser/programming/Climate-Data-Agent/ERA5_Rome.grib','/home/eouser/programming/Climate-Data-Agent/ERA5_London.grib']
-        # for idx, request in enumerate(self.requests):
-        #     name = self.request_format["cds_request"]["name"]
-        #     print(request, name)
-        #     result = self.client.retrieve(name, request)
-        #     file = self.download("ERA_5", self.location[idx], result)
-        file = "/home/eouser/programming/Climate-Data-Agent/ERA_5_Rome.grib"
-        ds = self.process(file)
-        self.processed_datasets[self.location[0]] = ds
+        for idx, request in enumerate(self.requests):
+            name = self.request_format["cds_request"]["name"]
+            print(request, name)
+            result = self.client.retrieve(name, request)
+            file = self.download("ERA_5", self.location[idx], result)
+        # file = "/home/eouser/programming/Climate-Data-Agent/ERA_5_Rome.grib"
+            ds = self.process(file)
+            self.processed_datasets[self.location[idx]] = ds
 
     
-    def download(self, filename, location, result):
+    def download(self, filename, location, result, timeframe):
         """
         """
         filename = f"{filename}_{location}.{self.datatype}"
