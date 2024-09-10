@@ -107,13 +107,13 @@ class AnalysisHandler():
     def comparison(self, eo_request: EORequest):
         if eo_request.multi_loc_request == True:
             dataframe_multi_loc = self.get_dataframes_from_multi_eorequest(eo_request)
-            fig = self.get_plotly_figure_multi(dataframe_multi_loc, eo_request.variable_long_name, eo_request.request_location)
+            fig = self.get_plotly_figure_multi_loc(dataframe_multi_loc, eo_request.variable_long_name, eo_request.request_location)
             message = f"Comparing the locations {eo_request.request_location[0]} and {eo_request.request_location[1]}"
             return fig, message
         elif eo_request.multi_time_request == True:
             dataframe_multi_time = self._get_dataframe_from_eorequest(eo_request)
             message = f"Comparing the two time ranges {eo_request.request_timeframe[0]}-{eo_request.request_timeframe[1]} and {eo_request.request_timeframe[2]}-{eo_request.request_timeframe[3]} of the location {eo_request.request_location[0]} "
-            fig = self.get_plotly_figure_multi(dataframe_multi_time, eo_request.variable_long_name, eo_request.request_location, eo_request.multi_time_request, eo_request.request_timeframe)
+            fig = self.get_plotly_figure_multi_time(dataframe_multi_time, eo_request.variable_long_name, eo_request.multi_time_request, eo_request.request_timeframe)
             return fig, message
         
     def _get_dataframe_from_eorequest(self, eo_request: EORequest):
@@ -126,7 +126,7 @@ class AnalysisHandler():
         
         df = pd.DataFrame({
             'ds': ds_filtered["time"].dt.strftime('%Y-%m-%d').values,
-            'y': ds_filtered[eo_request.variable_short_name].mean(dim=['latitude', 'longitude']).values
+            'y': ds_filtered.mean(dim=['latitude', 'longitude']).values
             })       
 
         return df
@@ -187,7 +187,7 @@ class AnalysisHandler():
                         
         # Extract year and month from time coordinates for labeling
         months = ds_filtered['time'].dt.strftime('%Y-%m-%d').values
-        monthly_means = ds_filtered[eo_request.variable_short_name].groupby('time.month').mean(dim=['latitude', 'longitude']).values 
+        monthly_means = ds_filtered.groupby('time.month').mean(dim=['latitude', 'longitude']).values 
         
         df = pd.DataFrame({
             'time': months,
@@ -232,7 +232,7 @@ class AnalysisHandler():
         
         for idx, dataset in enumerate(filtered_datasets):
             months = dataset['time'].dt.strftime('%Y-%m-%d').values
-            monthly_means = dataset[eo_request.variable_short_name].sel(new_dim=idx).groupby('time.month').mean(dim=['latitude', 'longitude']).values
+            monthly_means = dataset.sel(new_dim=idx).groupby('time.month').mean(dim=['latitude', 'longitude']).values
             
             df = pd.DataFrame({
                 f'time_{idx + 1}': months,
@@ -243,71 +243,78 @@ class AnalysisHandler():
         
         return dataframes
     
-    def get_plotly_figure_multi(self, df, variable_name, locations, multi_time, years_to_compare):
+    def get_plotly_figure_multi_loc(self, df, variable_name, locations):
+        
+        colors = ['blue', 'red', 'green', 'orange', 'purple', 'brown', 'pink', 'cyan']  # Extend if needed
+        fig = go.Figure()
+        # Ensure the 'ds' column is in datetime format
+        
+        for idx, ds in enumerate(df):
+            fig.add_trace(go.Scatter(
+                x=ds[f'time_{idx + 1}'],
+                y=ds[f'value_{idx + 1}'],
+                mode='lines',
+                name=f'{locations[idx]}',
+                line=dict(color=colors[idx])  # Set the color for each trace
+            ))
+
+        # Customize layout
+        fig.update_layout(
+            title='Monthly Means Comparison',
+            xaxis_title='Time',
+            yaxis_title=variable_name,
+            legend_title='Datasets',
+            template='plotly'
+        )
+        
+        return fig
+    
+    def get_plotly_figure_multi_time(self, df, variable_name, multi_time, years_to_compare):
         
         colors = ['blue', 'red', 'green', 'orange', 'purple', 'brown', 'pink', 'cyan']  # Extend if needed
         fig = go.Figure()
         # Ensure the 'ds' column is in datetime format
         
 
-        # Loop over the years to compare and add each one as a trace with a different color
-        if multi_time:
-            if df['ds'].dtype == 'object':  # This checks if the column is of string type
-                df['ds'] = pd.to_datetime(df['ds'])
+    # Loop over the years to compare and add each one as a trace with a different color
+        if df['ds'].dtype == 'object':  # This checks if the column is of string type
+            df['ds'] = pd.to_datetime(df['ds'])
 
-            # Remove February 29 from leap years
-            df = df[~((df['ds'].dt.month == 2) & (df['ds'].dt.day == 29))]
+        # Remove February 29 from leap years
+        df = df[~((df['ds'].dt.month == 2) & (df['ds'].dt.day == 29))]
+    
+    # Create a new column for the month to be used on the x-axis
+        df['month'] = df['ds'].dt.strftime('%b %d')
+        years = self.extract_years_from_dates(multi_time, years_to_compare)
         
-        # Create a new column for the month to be used on the x-axis
-            df['month'] = df['ds'].dt.strftime('%b %d')
-            years = self.extract_years_from_dates(multi_time, years_to_compare)
+        for i, year_str in enumerate(years):
+            year = int(year_str)
             
-            for i, year_str in enumerate(years):
-                year = int(year_str)
-                
-                # Filter dataframe for the current years
-                df_filtered = df[df['ds'].dt.year == year]
-                
-                # Add a trace for the filtered dataframe, using 'month' for the x-axis
-                fig.add_trace(go.Scatter(
-                    x=df_filtered['month'],
-                    y=df_filtered['y'],
-                    mode='lines',
-                    name=f'Year {year}',
-                    line=dict(color=colors[i % len(colors)]),
-                ))
+            # Filter dataframe for the current years
+            df_filtered = df[df['ds'].dt.year == year]
             
-            # Update layout
-            fig.update_layout(
-                title='Comparison of Different Years (Overlapped by Month)',
-                xaxis_title='Time',
-                yaxis_title=variable_name,
-                legend_title='Years',
-                xaxis=dict(
-                    tickmode='array',
-                    tickvals=[15, 45, 74, 105, 135, 166, 196, 227, 258, 288, 319, 349],
-                    ticktext=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-                    range=[1, 365]
-                )
+            # Add a trace for the filtered dataframe, using 'month' for the x-axis
+            fig.add_trace(go.Scatter(
+                x=df_filtered['month'],
+                y=df_filtered['y'],
+                mode='lines',
+                name=f'Year {year}',
+                line=dict(color=colors[i % len(colors)]),
+            ))
+        
+        # Update layout
+        fig.update_layout(
+            title='Comparison of Different Years (Overlapped by Month)',
+            xaxis_title='Time',
+            yaxis_title=variable_name,
+            legend_title='Years',
+            xaxis=dict(
+                tickmode='array',
+                tickvals=[15, 45, 74, 105, 135, 166, 196, 227, 258, 288, 319, 349],
+                ticktext=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                range=[1, 365]
             )
-        else:
-            for idx, ds in enumerate(df):
-                fig.add_trace(go.Scatter(
-                    x=ds[f'time_{idx + 1}'],
-                    y=ds[f'value_{idx + 1}'],
-                    mode='lines',
-                    name=f'{locations[idx]}',
-                    line=dict(color=colors[idx])  # Set the color for each trace
-                ))
-
-            # Customize layout
-            fig.update_layout(
-                title='Monthly Means Comparison',
-                xaxis_title='Time',
-                yaxis_title=variable_name,
-                legend_title='Datasets',
-                template='plotly'
-            )
+        )
         
         return fig
     

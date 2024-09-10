@@ -21,7 +21,6 @@ class ClimateDataStorageHandler():
         self.years = []
         self.requests = []
         self.variable = None
-        self.processed_datasets = {}
 
         
     def construct_request(self, eo_request: EORequest):
@@ -46,18 +45,19 @@ class ClimateDataStorageHandler():
             self.datatype = self.cds_request_format["data_format"]
             self.requests.append(request)
         
-    def get_data(self):
+    def get_data(self, processed_datasets):
         
         # file_names = ['/home/eouser/programming/Climate-Data-Agent/ERA5_Rome.grib','/home/eouser/programming/Climate-Data-Agent/ERA5_London.grib']
-        for idx, request in enumerate(self.requests):
-            name = self.request_format["cds_request"]["name"]
-            print(request, name)
-            result = self.client.retrieve(name, request)
-            file = self.download("ERA_5", self.location[idx], result)
-        # file = "/home/eouser/programming/Climate-Data-Agent/ERA_5_Rome.grib"
-            ds = self.process(file)
-            self.processed_datasets[self.location[idx]] = ds
+        # for idx, request in enumerate(self.requests):
+        #     name = self.request_format["cds_request"]["name"]
+        #     print(request, name)
+        #     result = self.client.retrieve(name, request)
+        #     file = self.download("ERA_5", self.location[idx], result)
+        file = "/home/eouser/programming/Climate-Data-Agent/ERA_5_Rome.grib"
+        ds = self.process(file)
+        processed_datasets[self.location[0]] = ds
 
+        return processed_datasets
     
     def download(self, filename, location, result, timeframe):
         """

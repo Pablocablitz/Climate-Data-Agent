@@ -106,9 +106,9 @@ class EORequest():
         self._process_data()
         
     def _process_data(self):
-        variable_names = list(self.data.data_vars)
+        variable_names = self.variable_short_name
                 
-        match(variable_names[0]):
+        match(variable_names):
             case "v10":
                 self._process_windspeed()
                 
@@ -116,17 +116,17 @@ class EORequest():
                 self._process_windspeed()
                 
             case "e":
-                self.data["e"] *= -1000  #convert from m to mm 
+                self.data *= -1000  #convert from m to mm 
                 self.variable_units = "mm"
                                
             case "t2m":
-                self.data["t2m"] -= 273.15  #convert from kelvin to celsius
+                self.data -= 273.15  #convert from kelvin to celsius
 
             case "skt":
-                self.data["skt"] -= 273.15  #convert from kelvin to celsius
+                self.data -= 273.15  #convert from kelvin to celsius
 
             case "tp":
-                self.data["tp"] *= 1000 #convert m to mm in precipitation data
+                self.data *= 1000 #convert m to mm in precipitation data
                 self.variable_units = "mm"
 
             case _:
