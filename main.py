@@ -1,14 +1,9 @@
-from cda_classes.chatbot import Chatbot
 import streamlit as st
-import jsonpickle
-import os
+
+
 from streamlit_extras.bottom_container import bottom
-from datetime import datetime, timedelta
 from streamlit_app.sidebar import sidebar
-# @st.cache_resource    
-# def load_chatbot():
-#     chatbot = Chatbot()
-#     return chatbot
+from cda_classes.chatbot import Chatbot
 
 class EOChatBot():
     def __init__(self):
@@ -35,13 +30,18 @@ class EOChatBot():
                     st.markdown(message["prompt"], unsafe_allow_html=True)
                     
                 elif message.get("request_info"):
-                    st.write(message["request_info"])   
+                    st.markdown(message["request_info"], unsafe_allow_html=True)   
                                  
                 elif message.get("analysis"):
                     analysis = message["analysis"]
+                    tab_names = analysis["tabs"]
                     st.header(analysis["analysis_header"])
-                    st.write(analysis["analysis_message"])
-                    st.plotly_chart(analysis["plotly_chart"])
+                    tabs = st.tabs(tab_names)
+                    for tab, figure, analysis_text in zip(tabs, analysis["plotly_charts"], analysis["analysis_texts"]):
+                        with tab:
+                            st.write(analysis_text)
+                            if figure:
+                                st.plotly_chart(figure)
                     
                 elif st.session_state.click[idx] == True:
 
@@ -101,7 +101,7 @@ class EOChatBot():
 
 
 
-        st.sidebar.title('Documentation')
+        # st.sidebar.title('Documentation')
 
         # Variables section
         with st.sidebar:
@@ -126,6 +126,7 @@ class EOChatBot():
             with button_col:
                 if st.button("Clear Chat"):
                     st.session_state.messages = []    
+                    st.session_state.past_request = []
                     st.session_state.click = []
                     st.rerun()                
 

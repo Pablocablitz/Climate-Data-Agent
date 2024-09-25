@@ -1,0 +1,39 @@
+Hydro_power:
+  - name: hydropower_open_loop_pumped_storage_inflow_energy
+    short_name:
+    units: 
+  - name: hydropower_reservoirs_generation_energy
+    short_name:
+    units: 
+  - name: hydropower_reservoirs_inflow_energy
+    short_name:
+    units: 
+  - name: hydropower_run_of_river_generation_energy
+    short_name:
+    units: 
+  - name: hydropower_run_of_river_inflow_energy
+    short_name:
+    units: 
+  - name: hydropower_run_of_river_with_pondage_generation_energy
+    short_name:
+    units: 
+  - name: hydropower_run_of_river_with_pondage_inflow_energy
+    short_name:
+    units: 
+Solar_power:
+  - name: concentrated_solar_generation_capacity_factor
+    short_name:
+    units: 
+  - name: solar_generation_capacity_factor
+    short_name:
+    units: 
+Wind_power:
+  - name: wind_power_offshore_capacity_factor 
+    short_name:
+    units: 
+  - name: wind_power_onshore_capacity_factor
+    short_name:
+    units: 
+
+
+

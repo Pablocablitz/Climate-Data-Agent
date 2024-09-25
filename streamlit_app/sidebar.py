@@ -1,16 +1,20 @@
 import streamlit as st
+
 from datetime import datetime, timedelta
         
-        
-        
-        
-        
-
-
-# Get today's date
-
-
 def sidebar():
+    
+    # Load the local image
+    logo_path = "/my_volume/programming/Climate-Data-Agent/assets/ESA_logo_Tagline_WT_EN.png"
+    
+    # Use columns to display text and image side by side in the sidebar
+    col1, col2 = st.columns([1, 1], vertical_alignment="center")  # Adjust the width ratio (2:1)
+    
+    # Title in the first column
+    col1.title("Documentation")
+    
+    # Image in the second column
+    col2.image(logo_path, width=200)
     today = datetime.now()
 
     # Calculate the date 7 days ago

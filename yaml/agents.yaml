@@ -1,7 +1,7 @@
 general_template: |
     You are an expert in {expertise_area}. Your task is to {task_description}.
-    The request will be given as:
-    'prompt': '{prompt}'
+    The prompt is:
+    '{prompt}.'
 
     {list_of_types}
 
@@ -44,6 +44,20 @@ attributes:
         guideline_3: "Only answer with the JSON file without any other information."
         guideline_4: "If the prompt contains only numbers, such as years or dates, return 'None'."
 
+    binary_location_detection:
+        expertise_area: "validating location"
+        task_description: "determine if the provided input is a valid location"
+        list_of_types: 
+        response_type: |
+            Please respond with only the JSON file format:
+            {
+            "is_valid_location": "True" or "False"
+            }
+        guideline_1: "If any information is missing, respond with False."
+        guideline_2: "Only evaluate strings as valid location values, no numbers like years or dates."
+        guideline_3: "Only answer with the JSON file without any other information."
+        guideline_4: "If the prompt contains only numbers, such as years or dates, return False."
+
 
     timeframe_agent:
         expertise_area: "identifying time intervals"
@@ -67,6 +81,56 @@ attributes:
             - If no time interval is given, put 'None'.
         guideline_3: "Only answer with the JSON file without any other information."
         guideline_4: "Ensure the end date does not exceed the current date of 01/06/2024."
+
+    time_context_extractor_agent:
+        expertise_area: 'in recognizing the time context'
+        task_description: |
+            comprehensively extract and identify all 
+            time-related components from user prompts. When you receive a sentence, analyze it thoroughly to identify any 
+            references to time, dates, durations, or specific moments. This includes, but is not limited to, specific dates, 
+            times of day, days of the week, and any mentioned time durations. It is crucial that you capture every relevant 
+            detail, ensuring no time-related information is missed. Present the extracted time-related elements in a JSON format.
+        list_of_types: |
+                The JSON should contain a key called 'time_references' with a list of all identified time-related components.
+                For example:
+                    Input: Show me the temperature in Rome between 2006 and 2010 and in the summer of 2021
+                    Output: {"time_references": ["between 2006 and 2010\", "in the summer of 2021\"]}
+
+        response_type: |
+            Please respond only with a JSON object in the following format:
+                {{
+                    "time_references": ["extracted_time_reference_1", "extracted_time_reference_2", ...] or ['None'] if no time references are found
+                }}
+        guideline_1: "Extract all time-related elements, ensuring that no relevant detail is missed."
+        guideline_2: "Handle edge cases, such as when no time reference is provided, by returning 'time_references': ['None']."
+        guideline_3: "You are only ever to respond in the JSON format described above."
+        guideline_4: "Follow the example format strictly, ensuring consistency and accuracy in identifying time-related components."
+
+    time_range_extraction_agent:
+        expertise_area: 'in extracting time ranges from time-related references'
+        task_description: |
+            Your task is extract out of the time-related information the dates
+            and convert it into a specific time range with start and end dates. 
+            The prompt you will receive is in str format, containing the time references. 
+            Based on these references, determine the start and end dates of the time range they represent. 
+            The date format should be 'DD/MM/YYYY'.
+        
+        list_of_types: |
+            
+        
+        response_type: |
+            Please respond only with a JSON object in the following format:
+            {{
+                "start_date": "DD/MM/YYYY", or "None"  if a time range cannot be determined
+                "end_date": "DD/MM/YYYY", or "None"    if a time range cannot be determined
+            }}
+            
+
+        guideline_1: "Use the current date: {current_date} as the reference point for any relative time calculations (e.g., 'the last 5 years')."
+        guideline_2: 
+        guideline_3: "If the time references are ambiguous or insufficient, return a JSON with an error message: 'error': 'Unable to determine time range'."
+        guideline_4: "Always respond with a JSON output and avoid any additional text."
+
     compare_timeframe_agent:
         expertise_area: "identifying multiple time intervals"
         task_description: "extract the start and end dates for multiple years or date ranges from the given request"
@@ -142,12 +206,14 @@ attributes:
         response_type: |
             Please respond with only the JSON file format:
             {
-              "analysis_type": "analysis_type_name"
+            "analysis_type": "analysis_type_name"
             }
-        guideline_1: "If no specific analysis type is explicitly mentioned, set 'analysis_type' to 'None'."
-        guideline_2: "The user requesting data from a given location at a given timeframe does NOT constitute a valid analysis type."
+        guideline_1: "If no specific analysis type is explicitly mentioned, set 'analysis_type' to 'basic_analysis'."
+        guideline_2: "The user requesting data from a given location at a given timeframe does NOT constitute a valid analysis type. Only select comparison and prediction when you find keywords that describe these analysis types."
         guideline_3: "Only answer with the JSON file without any other information."
-        guideline_4: "If the prompt contains only numbers, such as years or dates, return 'None'."
+        guideline_4: | 
+            "If the prompt contains only numbers, such as years or dates, return 'None'."
+            "If the prompt doesn't contain clear indicators for 'comparison' or 'prediction', always default to 'basic_analysis'."
 
     review_agent:
         expertise_area: "providing climate product descriptions"
@@ -174,6 +240,96 @@ attributes:
         guideline_2: "Ask the user to provide the missing information."
         guideline_3: ""
         guideline_4: ""
+
+    new_request_agent:
+        expertise_area: "Determine whether the current user prompt is addressing missing information from previous errors or if it represents a completely new request unrelated to the previous one."
+        
+        task_description: "Differentiate between user prompts that are providing additional missing information and those that are making new, independent requests. New requests are typically fully formed inquiries that introduce new topics or parameters, while additional information is usually related to filling in missing or previously requested data."
+
+        list_of_types: |
+
+        response_type: |
+            Return a JSON object in the following format:
+
+            If the user is making a new request:
+            {
+                "new_request": "True"
+            }
+
+            If the user is providing additional missing information:
+            {
+                "new_request": "False"
+            }
+
+        guideline_1: "A new request is typically a complete, independent prompt, often introducing new parameters, locations, timeframes, or topics. Examples of new requests include: 'Show me the temperature in Rome in 2021', 'Compare the precipitation of Rome and London between 2015 and 2020', or 'Show me a prediction of the temperature in London between 2020 and 2023.'"
+        
+        guideline_2: "When the user is providing additional missing information, it usually consists of short, such as specifying a location or timeframe or parameter like Temperature."
+        
+        guideline_3: "Only output the necessary JSON dict: { 'new_request': 'True' } or { 'new_request': 'False' } depending on the classification."
+        
+        guideline_4: 
+
+    data_frequency_extraction_agent:
+        expertise_area: 'in extracting data frequency requests from user prompts'
+        task_description: |
+            Your task is to extract whether the user is asking for daily, weekly, or monthly data based on the references in their input.
+            The prompt you will receive is in string format and contains information about the requested frequency.
+            Based on these references, determine if the user is asking for daily, weekly, or monthly data.
+            If no specific frequency is mentioned, use "daily" as the default.
+
+        list_of_types: 
+        
+        response_type: |
+            Please respond only with a JSON object in the following format:
+            {{
+                "frequency": "daily" or "weekly" or "monthly", or "None" if the frequency is not clearly specified
+            }}
+        
+        guideline_1: "If no specific frequency is mentioned, default the frequency to 'daily'."
+        guideline_2: "If the references to frequency are ambiguous or unclear, return a JSON with an error message: 'error': 'Unable to determine frequency'."
+        guideline_3: "Always respond with a JSON output and avoid any additional text."
+        guideline_4: 
+
+    prediction_years_extraction_agent:
+        expertise_area: 'in extracting the number of years for predictions from user prompts'
+        task_description: |
+            Your task is to extract the number of years the user is requesting for predictions based on the references in their input.
+            The prompt you will receive is in string format and contains information about the time period for predictions.
+            Based on these references, determine how many years of prediction the user is asking for.
+        list_of_types:
+        
+        response_type: |
+            Please respond only with a JSON object in the following format:
+            {{
+                "years_of_prediction": number of years as an integer, or "None" if the number of years is not specified
+            }}
+        
+        guideline_1: "If the time reference is ambiguous or unclear, return a JSON with an error message: 'error': 'Unable to determine number of years'."
+        guideline_2: "Always respond with a JSON output and avoid any additional text."
+        guideline_3:
+        guideline_4:
+
+    energy_product_detection_agent:
+        expertise_area: 'in identifying whether the user is requesting an energy-related product'
+        task_description: |
+            Your task is to determine if the user is asking for an energy-related product based on the references in their input.
+            The prompt you will receive is in string format and contains information about products or services.
+            Based on these references, determine if the user is requesting an energy-related product.
+
+        list_of_types:
+        
+        response_type: |
+            Please respond only with a JSON object in the following format:
+            {{
+                "energy_product": "yes" or "no", depending on whether the product is energy-related or not,
+                "None" if it is unclear or not specified
+            }}
+        
+        guideline_1: "If the references to energy-related products are ambiguous or unclear, return a JSON with an error message: 'error': 'Unable to determine if the product is energy-related'."
+        guideline_2: "Always respond with a JSON output and avoid any additional text."
+        guideline_3:
+        guideline_4:
+
 
 
 

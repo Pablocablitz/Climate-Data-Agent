@@ -1,124 +1,197 @@
-from loguru import logger
 import xarray as xr
-from .eorequest import EORequest
+import plotly.express as px
+import plotly.graph_objs as go
+import string
 import pandas as pd
 import numpy as np
-import string
+
 from utils.utils import Utilities
-import plotly.express as px
+from .eorequest import EORequest
 from prophet import Prophet
 from prophet.plot import plot_plotly, plot_components
-import plotly.graph_objs as go
+from dateutil.relativedelta import relativedelta
+from loguru import logger
 
 
 
 class AnalysisHandler():
     def __init__(self):
-        self.analysis_types = "basic_analysis, significant_event_detection, predictions, comparison"
-
+        self.analysis_types = "basic_analysis, predictions, comparison"
+        self.colors = [
+            '#1f77b4',  # Muted Blue
+            '#ff7f0e',  # Soft Orange
+            '#2ca02c',  # Calm Green
+            '#d62728',  # Warm Red
+            '#9467bd',  # Light Purple
+            '#8c564b',  # Earthy Brown
+            '#e377c2',  # Pink Accent
+            '#7f7f7f',  # Neutral Gray
+            '#bcbd22',  # Olive Green
+            '#17becf'   # Teal
+        ]
     def basic_analysis(self, eo_request: EORequest):
         # a basic analysis contains:
         # * minima and maxima
         # * standard deviation
+        figures = []
+        messages = []
+        for request in eo_request.collected_sub_requests:
+            df = self.get_monthly_mean_dataframe(request)
         
-        df = self.get_monthly_mean_dataframe(eo_request)
-        
-        minval, maxval = self.get_min_max_from_dataframe(df)
-        
-        return self.get_plot_from_dataframe(df, eo_request.variable_long_name + " [" + eo_request.variable_units + "]"), self.get_basic_analysis_string(
-            minval,
-            maxval,
-            self.get_std_from_dataframe(df),
-            eo_request.variable_units
-        )
+            minval, maxval = self.get_min_max_from_dataframe(df)
+            
+            figure = self.get_plot_from_dataframe(df, eo_request.variable_long_name + " [" + eo_request.variable_units + "]")
+            message = self.get_basic_analysis_string(minval, maxval, self.get_std_from_dataframe(df), eo_request.variable_units)
+            figures.append(figure)
+            messages.append(message)
+            
+        return figures, messages
 
     def significant_event_detection(self, eo_request: EORequest):
         # * Outlier/Anomaly detection
         logger.warning("Attempted significant event detection, but this is not implemented yet!")
 
     def predictions(self, eo_request: EORequest):
-        df = self._get_dataframe_from_eorequest(eo_request)
-        
-        model = Prophet()
-        
-        model.fit(df)
-        
-        # figure out what a period is, possibly calculate timesteps in order to ensure predicitons are always for e.g. 1 year
-        future = model.make_future_dataframe(periods=1000)
-        forecast = model.predict(future)
-        message = "The following prediction was performed based on the downloaded data. The prediction encompasses 1000 periods [TBC]"
-        
-        # Create a Plotly figure
-        fig = go.Figure()
+        figures = []
+        messages = []
+        for request in eo_request.collected_sub_requests:
+            df = self._get_dataframe_from_eorequest(request)
+            print(df)
+            model = Prophet()
+            
+            model.fit(df)
+            
+            # figure out what a period is, possibly calculate timesteps in order to ensure predicitons are always for e.g. 1 year
+            future = model.make_future_dataframe(periods=request.timeframe_object.prediction_number*365)
+            forecast = model.predict(future)
+            message = f"The following prediction was performed based on the downloaded data. The prediction encompasses {request.timeframe_object.prediction_number*365} periods [TBC]"
+            messages.append(message)
+            
+            # Create a Plotly figure
+            fig = go.Figure()
 
-        # Add the training data trace
-        fig.add_trace(go.Scatter(
-            x=df['ds'], 
-            y=df['y'], 
-            mode='lines', 
-            name='Training Data',
-            line=dict(color='red')  # Set the color for training data
-        ))
+            # Add the training data trace
+            fig.add_trace(go.Scatter(
+                x=df['ds'], 
+                y=df['y'], 
+                mode='lines', 
+                name='Training Data',
+                line=dict(color='red')  # Set the color for training data
+            ))
 
-        # Add the forecast trace
-        fig.add_trace(go.Scatter(
-            x=forecast['ds'], 
-            y=forecast['yhat'], 
-            mode='lines', 
-            name='Forecast',
-            line=dict(color='blue')  # Set the color for forecast data
-        ))
+            # Add the forecast trace
+            fig.add_trace(go.Scatter(
+                x=forecast['ds'], 
+                y=forecast['yhat'], 
+                mode='lines', 
+                name='Forecast',
+                line=dict(color='blue')  # Set the color for forecast data
+            ))
 
-        # Add the confidence interval (upper bound)
-        fig.add_trace(go.Scatter(
-            x=forecast['ds'], 
-            y=forecast['yhat_upper'], 
-            mode='lines', 
-            name='Upper Confidence Interval',
-            line=dict(width=0),  # No line, just the fill
-            showlegend=False
-        ))
+            # Add the confidence interval (upper bound)
+            fig.add_trace(go.Scatter(
+                x=forecast['ds'], 
+                y=forecast['yhat_upper'], 
+                mode='lines', 
+                name='Upper Confidence Interval',
+                line=dict(width=0),  # No line, just the fill
+                showlegend=False
+            ))
 
-        # Add the confidence interval (lower bound)
-        fig.add_trace(go.Scatter(
-            x=forecast['ds'], 
-            y=forecast['yhat_lower'], 
-            mode='lines', 
-            name='Lower Confidence Interval',
-            fill='tonexty',  # Fill to the next trace (upper bound)
-            line=dict(width=0),  # No line, just the fill
-            fillcolor='rgba(0, 0, 255, 0.2)',  # Transparent blue color
-            showlegend=False
-        ))
+            # Add the confidence interval (lower bound)
+            fig.add_trace(go.Scatter(
+                x=forecast['ds'], 
+                y=forecast['yhat_lower'], 
+                mode='lines', 
+                name='Lower Confidence Interval',
+                fill='tonexty',  # Fill to the next trace (upper bound)
+                line=dict(width=0),  # No line, just the fill
+                fillcolor='rgba(0, 0, 255, 0.2)',  # Transparent blue color
+                showlegend=False
+            ))
 
-        # Customize the layout
-        fig.update_layout(
-            title='Forecast vs Training Data',
-            xaxis_title='Date',
-            yaxis_title='Value',
-            template='plotly_white'
-        )
-
+            # Customize the layout
+            fig.update_layout(
+                title='Forecast vs Training Data',
+                xaxis_title='Date',
+                yaxis_title='Value',
+                template='plotly_white'
+            )
+            figures.append(fig)
         # figure = plot_plotly(model, forecast)
         
-        return fig, message
+        return figures, messages
         
     
     def comparison(self, eo_request: EORequest):
+        figures = []
+        messages = []
         if eo_request.multi_loc_request == True:
-            dataframe_multi_loc = self.get_dataframes_from_multi_eorequest(eo_request)
-            fig = self.get_plotly_figure_multi_loc(dataframe_multi_loc, eo_request.variable_long_name, eo_request.request_location)
-            message = f"Comparing the locations {eo_request.request_location[0]} and {eo_request.request_location[1]}"
-            return fig, message
+            fig = go.Figure()
+            for sub_request, color in zip(eo_request.collected_sub_requests, self.colors):
+                df = self._get_dataframe_from_eorequest(sub_request)
+                fig = self.get_plotly_figure_multi_loc(fig, df, eo_request.variable_long_name, sub_request.location, color)
+                formatted_loc_string = Utilities.join_locations(eo_request.request_locations)
+                message = f"Comparing the locations {formatted_loc_string}"
+                messages.append(message)
+            figures.append(fig)    
+            return figures, messages
+        
         elif eo_request.multi_time_request == True:
-            dataframe_multi_time = self._get_dataframe_from_eorequest(eo_request)
-            message = f"Comparing the two time ranges {eo_request.request_timeframe[0]}-{eo_request.request_timeframe[1]} and {eo_request.request_timeframe[2]}-{eo_request.request_timeframe[3]} of the location {eo_request.request_location[0]} "
-            fig = self.get_plotly_figure_multi_time(dataframe_multi_time, eo_request.variable_long_name, eo_request.multi_time_request, eo_request.request_timeframe)
-            return fig, message
         
-    def _get_dataframe_from_eorequest(self, eo_request: EORequest):
+            length_intervall = []
+            
+            # Convert timeframes into total months for comparison
+            for timeframe in eo_request.request_timeframes:
+                delta = relativedelta(timeframe.enddate, timeframe.startdate)
+                total_months = delta.years * 12 + delta.months
+                length_intervall.append(total_months)
+            
+            first_interval = length_intervall[0]  # Reference interval
+            
+            # Assume intervals are the same until proven otherwise
+            eo_request.intervall_same_length = True
+            
+            for interval in length_intervall[1:]:
+                if interval != first_interval:
+                    eo_request.intervall_same_length = False
+                    break  # Intervals differ
+            print(f'intervall same lenght : {eo_request.intervall_same_length}')
+            time_ranges = []
+            fig = go.Figure()  # Initialize empty figure
+            used_colors = []
+            
+            # Iterate over each request and generate the plot
+            for sub_request in eo_request.collected_sub_requests:
+                df = self._get_dataframe_from_eorequest(sub_request)
+                start_date = sub_request.timeframe_object.startdate_str
+                end_date = sub_request.timeframe_object.enddate_str
+                time_ranges.append(f"{start_date}-{end_date}")
+                
+                        # Select a color that hasn't been used yet
+                for color in self.colors:
+                    if color not in used_colors:
+                        # Use the first unused color and add to used_colors
+                        used_colors.append(color)
+                        break
+                else:
+                    # If all colors are used, repeat colors by cycling through them
+                    color = self.colors[len(used_colors) % len(self.colors)]
+                    used_colors.append(color)
+                    
+                # Update the figure by passing it to get_plotly_figure_multi_time
+                fig = self.get_plotly_figure_multi_time(fig, df, eo_request.variable_long_name, color, eo_request.intervall_same_length, sub_request.timeframe_object)
+                
+            print(used_colors)
+            formatted_time_ranges = " and ".join(time_ranges)
+            figures.append(fig)  # Store the figure
+            messages.append(f"Comparing the time ranges: {formatted_time_ranges}")  # Add the comparison message
         
-        ds_filtered = self._get_filtered_dataset(eo_request)[0]
+            return figures, messages
+        
+    def _get_dataframe_from_eorequest(self, request):
+        
+        ds_filtered = self._get_filtered_dataset(request)
         
         # Extract year and month from time coordinates for labeling
         #months = ds_filtered['time'].dt.strftime('%Y-%m-%d').values
@@ -132,46 +205,44 @@ class AnalysisHandler():
         return df
     
     
-    def _get_filtered_dataset(self, eo_request: EORequest):
+    def _get_filtered_dataset(self, request):
         
-        start_date = eo_request.request_timeframe[0].strftime('%Y-%m-%d')
-        end_date = eo_request.request_timeframe[-1].strftime('%Y-%m-%d')
+        start_date = request.timeframe_object.startdate_str
+        end_date = request.timeframe_object.enddate_str
         # Select time range first
-        ds = eo_request.data.sel(time=slice(start_date, end_date))
-        
-        filtered_datasets = []
-        
+        ds = request.data.sel(time=slice(start_date, end_date))
+                
         # Loop through each bounding box corresponding to different locations
-        for obbox in eo_request.original_bounding_box:
-            north = obbox['north']
-            south = obbox['south']
-            east = obbox['east']
-            west = obbox['west']
+        obbox = request.obbox
+        north = obbox['north']
+        south = obbox['south']
+        east = obbox['east']
+        west = obbox['west']
             
-            # Filter the dataset for the current bounding box
-            ds_filtered = ds.sel(latitude=slice(south, north), longitude=slice(west, east))
-            
-            if ds_filtered['latitude'].size == 0 or ds_filtered['longitude'].size == 0:
-                logger.warning("Filtered dataset is empty using the exact original bounding box. Trying to include nearest points.")
-                
-                # Get the nearest latitude and longitude points
-                nearest_lat = ds['latitude'].sel(latitude=[south, north], method='nearest')
-                nearest_lon = ds['longitude'].sel(longitude=[west, east], method='nearest')
-                
-                # Perform the nearest neighbor selection
-                ds_filtered = ds.sel(latitude=nearest_lat, longitude=nearest_lon)
-                
-                # Log details about the nearest point selection
-                logger.debug(f"Nearest point filtered dataset dimensions: {ds_filtered.dims}")
-                logger.debug(f"Nearest point filtered dataset latitude range: {ds_filtered['latitude'].min().item()} to {ds_filtered['latitude'].max().item()}")
-                logger.debug(f"Nearest point filtered dataset longitude range: {ds_filtered['longitude'].min().item()} to {ds_filtered['longitude'].max().item()}")
-            
-            # Append the filtered dataset for this location
-            filtered_datasets.append(ds_filtered)
-            
-        return filtered_datasets
+        # Filter the dataset for the current bounding box
+        ds_filtered = ds.sel(latitude=slice(south, north), longitude=slice(west, east))
         
-    def get_monthly_mean_dataframe(self, eo_request: EORequest):
+        if ds_filtered['latitude'].size == 0 or ds_filtered['longitude'].size == 0:
+            logger.warning("Filtered dataset is empty using the exact original bounding box. Trying to include nearest points.")
+            
+            # Get the nearest latitude and longitude points
+            nearest_lat = ds['latitude'].sel(latitude=[south, north], method='nearest')
+            nearest_lon = ds['longitude'].sel(longitude=[west, east], method='nearest')
+            
+            # Perform the nearest neighbor selection
+            ds_filtered = ds.sel(latitude=nearest_lat, longitude=nearest_lon)
+            
+            # Log details about the nearest point selection
+            logger.debug(f"Nearest point filtered dataset dimensions: {ds_filtered.dims}")
+            logger.debug(f"Nearest point filtered dataset latitude range: {ds_filtered['latitude'].min().item()} to {ds_filtered['latitude'].max().item()}")
+            logger.debug(f"Nearest point filtered dataset longitude range: {ds_filtered['longitude'].min().item()} to {ds_filtered['longitude'].max().item()}")
+        
+        # Append the filtered dataset for this location
+        
+            
+        return ds_filtered
+        
+    def get_monthly_mean_dataframe(self, request):
         """
         Calculate monthly mean values for a specified variable from the processed dataset.
         
@@ -183,8 +254,8 @@ class AnalysisHandler():
             months (list): List of months (formatted as 'YYYY-MM').
             monthly_means (list): List of monthly mean values.
         """
-        ds_filtered = self._get_filtered_dataset(eo_request)[0]
-                        
+        ds_filtered = self._get_filtered_dataset(request)
+        print(type(ds_filtered))
         # Extract year and month from time coordinates for labeling
         months = ds_filtered['time'].dt.strftime('%Y-%m-%d').values
         monthly_means = ds_filtered.groupby('time.month').mean(dim=['latitude', 'longitude']).values 
@@ -243,20 +314,15 @@ class AnalysisHandler():
         
         return dataframes
     
-    def get_plotly_figure_multi_loc(self, df, variable_name, locations):
-        
-        colors = ['blue', 'red', 'green', 'orange', 'purple', 'brown', 'pink', 'cyan']  # Extend if needed
-        fig = go.Figure()
-        # Ensure the 'ds' column is in datetime format
-        
-        for idx, ds in enumerate(df):
-            fig.add_trace(go.Scatter(
-                x=ds[f'time_{idx + 1}'],
-                y=ds[f'value_{idx + 1}'],
-                mode='lines',
-                name=f'{locations[idx]}',
-                line=dict(color=colors[idx])  # Set the color for each trace
-            ))
+    def get_plotly_figure_multi_loc(self, fig:go.Figure, df, variable_name, location, color):        
+       
+        fig.add_trace(go.Scatter(
+            x=df[f'ds'],
+            y=df[f'y'],
+            mode='lines',
+            name=f'{location}',
+            line=dict(color=color)  # Set the color for each trace
+        ))
 
         # Customize layout
         fig.update_layout(
@@ -269,52 +335,106 @@ class AnalysisHandler():
         
         return fig
     
-    def get_plotly_figure_multi_time(self, df, variable_name, multi_time, years_to_compare):
+    def get_plotly_figure_multi_time(self, fig: go.Figure, df, variable_name, color, intervall_same_length, timeframe):
         
-        colors = ['blue', 'red', 'green', 'orange', 'purple', 'brown', 'pink', 'cyan']  # Extend if needed
-        fig = go.Figure()
-        # Ensure the 'ds' column is in datetime format
-        
-
-    # Loop over the years to compare and add each one as a trace with a different color
-        if df['ds'].dtype == 'object':  # This checks if the column is of string type
-            df['ds'] = pd.to_datetime(df['ds'])
-
-        # Remove February 29 from leap years
-        df = df[~((df['ds'].dt.month == 2) & (df['ds'].dt.day == 29))]
-    
-    # Create a new column for the month to be used on the x-axis
-        df['month'] = df['ds'].dt.strftime('%b %d')
-        years = self.extract_years_from_dates(multi_time, years_to_compare)
-        
-        for i, year_str in enumerate(years):
-            year = int(year_str)
+        # Handle same-length intervals
+        if intervall_same_length:
             
-            # Filter dataframe for the current years
-            df_filtered = df[df['ds'].dt.year == year]
             
-            # Add a trace for the filtered dataframe, using 'month' for the x-axis
+            
+            # Ensure 'ds' is in datetime format
+            df['date'] = pd.to_datetime(df['ds'])
+            
+            # Extract month and year
+            df['month'] = df['date'].dt.month
+            df['year'] = df['date'].dt.year
+            df['day'] = df['date'].dt.day 
+            
+            # Determine the number of years in the dataset
+            num_years = df['year'].nunique()
+            
+            # Create a repeated month pattern for x-axis
+            df['month_label'] = df['date'].dt.strftime('%b')  # Get month as short name (e.g., Jan, Feb, ...)
+            
+            # Create a unique x-value for each day in the dataset
+            df['x_value'] = (df['year'] - df['year'].min()) * 365 + df['date'].dt.dayofyear  # Unique value for each day across years
+            
+            
+            total_days = (df['year'].max() - df['year'].min() + 1) * 365
+
+            month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+            # Initialize tick values and labels
+            tickvals = []
+            ticktext = []
+            month_labels = month_names * num_years
+            tickvals = [i * (total_days / (12 * num_years)) + (total_days / (12 * num_years)) / 2 for i in range(12 * num_years)]            
+            ticktext = month_labels
+
+            # Reset the x-axis ticks before adding the trace
+            fig.update_xaxes(tickvals=[], ticktext=[])  # Clear previous ticks
+            
+            # Add traces to the figure
             fig.add_trace(go.Scatter(
-                x=df_filtered['month'],
-                y=df_filtered['y'],
-                mode='lines',
-                name=f'Year {year}',
-                line=dict(color=colors[i % len(colors)]),
+                x=df['x_value'],  # Unique x values based on year and month
+                y=df['y'],        # Variable values
+                mode='lines',  # Optional: Add markers for visibility
+                name=f'{timeframe.startdate_str}-{timeframe.enddate_str}',  # Label for the trace
+                line=dict(color=color)  # Set a unique color for each trace
             ))
-        
-        # Update layout
-        fig.update_layout(
-            title='Comparison of Different Years (Overlapped by Month)',
-            xaxis_title='Time',
-            yaxis_title=variable_name,
-            legend_title='Years',
-            xaxis=dict(
-                tickmode='array',
-                tickvals=[15, 45, 74, 105, 135, 166, 196, 227, 258, 288, 319, 349],
-                ticktext=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-                range=[1, 365]
+
+            # Customize layout for same-length intervals
+            fig.update_layout(
+                title='Time Frame Comparison',
+                xaxis_title='Months',
+                yaxis_title=variable_name,
+                legend_title='Datasets',
+                template='plotly',
+                xaxis=dict(
+                    tickvals=tickvals,  # Set ticks for each day of the year
+                    ticktext=ticktext,  # Month-Day labels
+                    title='Month Day'
+                )
             )
-        )
+        # Handle different-length intervals (normalize by day of the year)
+        else:
+            df['date'] = pd.to_datetime(df['ds'])  # Ensure 'ds' is in datetime format
+
+            # Extract year, month, and day of year for normalization
+            df['year'] = df['date'].dt.year
+            df['month'] = df['date'].dt.month
+            df['day_of_year'] = df['date'].dt.dayofyear
+
+            # Optionally, combine month and day_of_year as 'Month-Day' for x-axis labels
+            df['month_day'] = df['date'].dt.strftime('%b %d')  # E.g., 'Jan-15'
+
+            # Loop through each year and add a trace for each year
+            for year, colour in zip(df['year'].unique(), self.colors):
+                df_year = df[df['year'] == year]
+                
+                fig.add_trace(go.Scatter(
+                    x=df_year['month_day'],  # Combine Month and Day as the x-axis
+                    y=df_year['y'],          # Values
+                    mode='lines',
+                    name=str(year),          # Name of the trace (year)
+                    line=dict(color=colour, width=2),  # Set color and width
+                    hovertemplate='Month-Day: %{x}<br>Value: %{y}'  # Tooltip formatting
+                ))
+
+            # Customize layout for different-length intervals
+            fig.update_layout(
+                title="Comparison of Years Over Time by Month and Day",
+                xaxis_title="Month-Day",
+                yaxis_title=variable_name,
+                legend_title="Year",
+                hovermode="x unified",  # Unified hover mode
+                xaxis=dict(
+                    tickmode='array',  
+                    tickvals=[15, 45, 74, 105, 135, 166, 196, 227, 258, 288, 319, 349],
+                    ticktext=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    range=[1, 365]
+                )
+            )
         
         return fig
     
