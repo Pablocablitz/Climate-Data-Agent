@@ -6,8 +6,10 @@ import numpy as np
 from utils.utils import Utilities
 from cda_classes.eorequest import EORequest
 from loguru import logger
+from utils.utils import apply_timing_decorator
 
 
+@apply_timing_decorator
 class ClimateDataStorageHandler():
     def __init__(self):
 

@@ -1,5 +1,6 @@
 import streamlit as st
-
+import time 
+import logging
 
 from streamlit_extras.bottom_container import bottom
 from streamlit_app.sidebar import sidebar
@@ -45,12 +46,7 @@ class EOChatBot():
                     
                 elif st.session_state.click[idx] == True:
 
-                # elif message.get("animation_messages"):
-                    animation_messages = message["animation_messages"]
-                    
-                #     st.write("To view the animation, please use the optional generation button. Kindly be aware that loading may take some time. Also, if you search for new content while the animation is displayed, it will not be retained in your history due to the large loading process.")
-                #     button_state = animation_messages["button_state"]
-                #     if button_state:
+                    animation_messages = message["animation_messages"]      
                     st.header(animation_messages["animation_header"])
                     st.plotly_chart(animation_messages["animation"])
                     st.session_state.click[idx] = False
@@ -63,7 +59,7 @@ class EOChatBot():
                     st.write("Please refer to the Climate Data Agent documentation to ensure correct usage. Thank you!")
                     
 
-
+        # Customized Sidebar button
         st.markdown("""
             <style>
             /* Target the sidebar's collapsed button */
@@ -97,22 +93,11 @@ class EOChatBot():
             }
             </style>
             """, unsafe_allow_html=True)
-                
-
-
-
-        # st.sidebar.title('Documentation')
 
         # Variables section
         with st.sidebar:
             sidebar()
-
-                
-        request_complete = False        
-        
-
-        
-        
+     
         with bottom():
             chat_col, button_col = st.columns([4, 1])
             
@@ -121,8 +106,7 @@ class EOChatBot():
             with chat_col:
                 if (user_message := st.chat_input('user')):
                     st.session_state.messages.append({"role": "user", "prompt": user_message})
-                
-                    
+                   
             with button_col:
                 if st.button("Clear Chat"):
                     st.session_state.messages = []    
@@ -133,19 +117,8 @@ class EOChatBot():
         if user_message:            
             with st.chat_message("user"):
                 st.markdown(user_message)
-                        
+                
             self.chatbot.process_request(user_message)
-            
-   
-            # request_complete = True
-
-        if (request_complete):
-            self.chatbot.execute_request()
-            self.chatbot.output_results()
-            request_complete = False
-            st.stop()
-
-
 
 if __name__ == "__main__":
     eo_chatbot = EOChatBot()

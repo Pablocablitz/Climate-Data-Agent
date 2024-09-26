@@ -2,10 +2,14 @@ import plotly.express as px
 import xarray as xr
 
 from cda_classes.eorequest import EORequest
+from utils.utils import apply_timing_decorator
 
+
+@apply_timing_decorator
 class VisualisationHandler():
     def __init__(self):
         pass
+    
     def visualise_data(self, eorequest: EORequest):
         
         animation = self.generate_plotly_animation(eorequest)

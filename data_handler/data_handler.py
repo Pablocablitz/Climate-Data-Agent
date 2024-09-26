@@ -5,7 +5,10 @@ import numpy as np
 
 from data_handler.cds import ClimateDataStorageHandler
 from cda_classes.eorequest import EORequest
+from utils.utils import apply_timing_decorator
 
+
+@apply_timing_decorator
 class DataHandler():
     def __init__(self, ):
         self.request_cds = ClimateDataStorageHandler()

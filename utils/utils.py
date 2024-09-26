@@ -1,6 +1,10 @@
 import yaml 
 import json 
 import numpy as np
+import time 
+import functools
+import csv
+import os
 
 from loguru import logger
 from datetime import datetime, timedelta
@@ -106,8 +110,8 @@ class Utilities():
         
         # Join all but the last location with commas
         return ", ".join(locations[:-1]) + ", and " + locations[-1]
+    
 
-        
 class TimeSpan():
     def __init__(self, startdate, enddate):
         self.prediction_number = None
@@ -142,3 +146,66 @@ class SubRequest():
     
     def append_prediction_years(self, number):
         self.prediction_number = number
+        
+def time_function(log_file='timing_log.txt'):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            # Determine the class name if the function is a method
+            cls_name = ''
+            if args:
+                cls = args[0].__class__
+                if hasattr(cls, func.__name__):
+                    cls_name = cls.__name__ + '.'
+        
+            start_time = time.time()
+            result = func(*args, **kwargs)
+            end_time = time.time()
+            execution_time = end_time - start_time
+            log_message = f"Function '{cls_name}{func.__name__}' executed in {execution_time:.6f} seconds\n"
+            with open(log_file, 'a') as f:
+                f.write(log_message)
+            return result
+        return wrapper
+    return decorator
+
+def time_function_csv(csv_file='timing_log.csv'):
+    # Ensure the CSV file has headers if it doesn't exist
+    if not os.path.isfile(csv_file):
+        with open(csv_file, mode='w', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(['Function Name', 'Execution Time (s)'])
+
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            # Skip logging for the __init__ method
+            if func.__name__ == '__init__':
+                return func(*args, **kwargs)
+
+            cls_name = ''
+            if args:
+                cls = args[0].__class__
+                if hasattr(cls, func.__name__):
+                    cls_name = cls.__name__ + '.'
+
+            start_time = time.time()
+            result = func(*args, **kwargs)
+            end_time = time.time()
+            execution_time = end_time - start_time
+            
+            # Log to CSV
+            log_entry = [f"{cls_name}{func.__name__}", execution_time]
+            with open(csv_file, mode='a', newline='') as f:
+                writer = csv.writer(f)
+                writer.writerow(log_entry)
+                
+            return result
+        return wrapper
+    return decorator
+
+def apply_timing_decorator(cls, log_file='timing_log.csv'):
+    for attr_name, attr_value in cls.__dict__.items():
+        if callable(attr_value):
+            setattr(cls, attr_name, time_function_csv(log_file)(attr_value))
+    return cls

@@ -12,6 +12,7 @@ from cda_classes.visualisation_handler import VisualisationHandler
 from cda_classes.analysis_handler import AnalysisHandler
 from datetime import datetime
 from rapidfuzz import fuzz, process
+from utils.utils import apply_timing_decorator
 
 
 DEBUGMODE = False
@@ -24,6 +25,7 @@ def load_llm():
     llm = LargeLanguageModelProcessor()
     return llm
 
+@apply_timing_decorator
 class Chatbot():
     def __init__(self):
         self.llama3 = load_llm()
@@ -231,8 +233,6 @@ class Chatbot():
     def output_animation(self):
             st.session_state.click.append(True)
             st.session_state.messages.append({"role": "assistant","animation_messages": { "animation" : self.animation, "animation_header": self.animation_header}})
-    def output_results(self):
-        pass
     
     def replace_last_entry(self):
         if st.session_state.past_request:

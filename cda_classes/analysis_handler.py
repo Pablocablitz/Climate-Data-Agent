@@ -11,9 +11,10 @@ from prophet import Prophet
 from prophet.plot import plot_plotly, plot_components
 from dateutil.relativedelta import relativedelta
 from loguru import logger
+from utils.utils import apply_timing_decorator
 
 
-
+@apply_timing_decorator
 class AnalysisHandler():
     def __init__(self):
         self.analysis_types = "basic_analysis, predictions, comparison"
@@ -29,6 +30,7 @@ class AnalysisHandler():
             '#bcbd22',  # Olive Green
             '#17becf'   # Teal
         ]
+    
     def basic_analysis(self, eo_request: EORequest):
         # a basic analysis contains:
         # * minima and maxima
