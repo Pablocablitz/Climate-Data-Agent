@@ -117,11 +117,11 @@ class VisualisationHandler():
 
         figure.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
         # figure.update_layout.updatemenus[0].buttons[0].args[1]['frame']['duration'] = 30
-        figure.update_layout(updatemenus = [dict(buttons = [dict(
-                                               args = [None, {"frame": {"duration": 50, 
-                                                                        "redraw": False},
-                                                              "fromcurrent": True, 
-                                                              "transition": {"duration": 20}}])])])
+        # figure.update_layout(updatemenus = [dict(buttons = [dict(
+        #                                        args = [None, {"frame": {"duration": 50, 
+        #                                                                 "redraw": False},
+        #                                                       "fromcurrent": True, 
+        #                                                       "transition": {"duration": 20}}])])])
         
         return figure
     
