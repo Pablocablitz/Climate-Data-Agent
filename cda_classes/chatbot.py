@@ -14,10 +14,9 @@ from datetime import datetime
 from rapidfuzz import fuzz, process
 from utils.utils import apply_timing_decorator
 
-
 DEBUGMODE = False
 
-
+# Load Model with cache resource to not reload the llm each time streamlits reruns
 @st.cache_resource    
 def load_llm():        
     torch.cuda.empty_cache()
@@ -42,15 +41,12 @@ class Chatbot():
         if (DEBUGMODE):
             with st.chat_message("assistant"):
                 st.write("NOTE: THE DEBUGMODE IS ENABLED AND ALL REQUESTS WILL BE IGNORED. DUMMY DATA WILL BE LOADED AND DISPLAYED")
-                
+    
+    # Step 0 - check if climate context is provided 
     def check_request(self, user_prompt):
         self.request.request_type = self.prompt_manager.retrieve_information("request_type_agent", user_prompt)
 
     def extract_information(self, user_prompt):
-        # Initialize the dictionary to store responses
-        
-        # Step 0 - check context
-        # self.request.request_type = self.prompt_manager.retrieve_information("request_type_agent", user_prompt)
         
         # Step 1 - get location
         self.request.request_locations = self.prompt_manager.retrieve_information("location_agent", user_prompt)
@@ -60,6 +56,7 @@ class Chatbot():
         time_contexts = self.prompt_manager.retrieve_information("time_context_extractor_agent", user_prompt)
         
         if any(context is None or context == 'None' for context in time_contexts):
+            
             # If there is None or 'None' in the list, create a new list with one entry and return it
             self.request.request_timeframes = ['None']  # Replace 'default_time_entry' with your desired entry
         else:
@@ -71,29 +68,24 @@ class Chatbot():
         
         # Step 4 - get specific product name
         if self.request.request_product[0] != "None" and self.request.request_product[0] != None:
+            
             self.prompt_manager.specific_product_list = self.request.construct_product_agent_instruction()
             self.request.request_specific_product = self.prompt_manager.retrieve_information("specific_product_agent", user_prompt)
 
         # Step 5 - get analysis type
         self.request.request_analysis = self.prompt_manager.retrieve_information("analysis_agent", user_prompt)
+        
         # Step 5.1 - if one location and comparison is detected then try to find the two different time ranges
         if self.request.request_analysis[0] == 'comparison':
             self.request.multi_loc_request = True
             if len(self.request.request_locations) == 1:
-                #self.request.request_timeframe = self.prompt_manager.retrieve_information("compare_timeframe_agent", user_prompt)
                 self.request.multi_time_request = True
                 self.request.multi_loc_request = False
-        # elif self.request.request_analysis[0] == 'predictions':
-        #     self.request.prediction_number = 
+
             
-        # Step 6 - get visualisation type
-        # self.request.request_visualisation = self.prompt_manager.retrieve_information("visualisation_agent", user_prompt)        
-        
         self.request.post_process_request_variables()
 
-
-     # setting message block for assistant in the case of callback to user 
-     
+    # setting message block for assistant in the case of callback to user 
     def callback_user(self, user_prompt):
         if (self.request.request_valid):
             self.prompt_manager.callback_assistant_to_user("review_agent", user_prompt, self.request)
@@ -129,22 +121,12 @@ class Chatbot():
             else:
                 self.extract_information(user_prompt)
 
-            
-
             self.request.process_request()
             
             self.analysis_compatability()
+            
             # data download, data processing, analysis...
             st.session_state.past_request.append(self.request)
-            
-            # History version 0 is discontinued
-            # check if the context is related to history or has no relation with climate at all 
-            # if ((len(st.session_state.past_request) >= 2) and (not st.session_state.past_request[-2].request_valid)):
-            #     self.check_history()
-            # elif self.request.request_type == "False":
-            #     self.check_climate_context()
-            # else:
-            #     pass
             
             self.callback_user(user_prompt)
     
@@ -192,19 +174,12 @@ class Chatbot():
                 tabs = st.tabs(tab_names)
 
                 # Display each figure in its corresponding tab
-                for tab, figure, analysis_text in zip(tabs, figures, analysis_texts):
+                for tab, figure, analysis_text, sub_request in zip(tabs, figures, analysis_texts, self.request.collected_sub_requests):
                     with tab:
                         st.write(analysis_text)
                         if figure:
                             st.plotly_chart(figure)
-                # else:    
-                #     for analysis_text, figure in zip(analysis_texts, figures):
-                    
-                #         st.write(analysis_text)
-                    
-                #         if (figure):
-                #             st.plotly_chart(figure)
-                        
+                            
                 st.session_state.messages.append({"role": "assistant", "analysis":{"analysis_header":analysis_header,"analysis_texts": analysis_texts, "plotly_charts": figures, 'tabs': tab_names}})
 
 
@@ -220,61 +195,18 @@ class Chatbot():
                 self.animation_header = f"Animation for locations: {', '.join(self.request.request_locations)}"
                 if st.button("Generate Animation", on_click = self.output_animation):
                     st.write("your animation")
-                
-        
-                    
-                    
-        
-        # st.session_state.messages.append({"role": "assistant","animation_messages": { "animation" : animation, "button_state": button_clicked, "animation_header": animation_header}})
-
-
-                
-        
+    
+    # Function to generate animation after clicking the button 
     def output_animation(self):
             st.session_state.click.append(True)
             st.session_state.messages.append({"role": "assistant","animation_messages": { "animation" : self.animation, "animation_header": self.animation_header}})
     
+    #
     def replace_last_entry(self):
         if st.session_state.past_request:
             st.session_state.past_request[-1] = self.request
-    
-    def check_history(self):
-            # Get the second-to-last request
-            self.past_request = st.session_state.past_request[-2]
-
-            # Print the initial state of past_request and self.request
-            print("Initial past_request:", self.past_request)
-            print("Initial self.request:", self.request)
-
-            # Check if the second-to-last request was invalid and has errors
-            if not self.past_request.request_valid and self.past_request.errors:
-                # Update the past request attributes based on the errors
-                for error in self.past_request.errors:
-                    # Check if the attribute exists in self.request
-                    if hasattr(self.request, error):
-                        # Retrieve the value from self.request
-                        value = getattr(self.request, error)
-                        # Set the value to past_request
-                        setattr(self.past_request, error, value)
-                        
-                        # Print the attribute and value being set
-                        print(f"Updating {error} in past_request to {value}")
-
-                # Print the updated state of past_request
-                print("Updated past_request:", self.past_request)
-
-                # Set the current request to be the updated past request
-                self.request = self.past_request
-
-                # Print the final state of self.request
-                print("Final self.request:", self.request)
-                self.request.request_valid = True
-                self.request.errors = []
-                self.replace_last_entry()
-                self.request.process_request()
-            else:
-                pass
         
+    # Function to output unclear request to user
     def check_climate_context(self):
         with st.chat_message("assistant"):
             non_climate_data = "Thanks for your request. However there is no climate context. Please provide more accurate information."
@@ -282,9 +214,11 @@ class Chatbot():
             st.session_state.messages.append({"role": "assistant", "request_info": non_climate_data})
             st.stop()     
             
+    # Algorithm to delete found location and check for another location in prompt
     def search_and_check_all_loc(self, locations, user_prompt):
         threshold = 70  # Define your threshold for fuzzy matching
 
+        # loop iterates over user prompt until no location is found any more  
         while locations and locations[0] not in ["None", None]:
             # Convert found locations to lowercase for case-insensitive comparison
             # Convert found locations to lowercase for case-insensitive comparison
@@ -333,6 +267,8 @@ class Chatbot():
 
         return locations  # Return locations when loop is complete
     
+    # checks if the user is using wrong analysis types regarding to the timeframe 
+            # For Example: User says Prediction for the past -> contradiction causes user callback
     def analysis_compatability(self):
         now = datetime.now()
         date_str = now.strftime('%Y')
@@ -352,7 +288,8 @@ class Chatbot():
                             st.write(analysis_incompatability)
                             st.session_state.messages.append({"role": "assistant", "request_info": analysis_incompatability})
                             st.stop()
-                            
+    
+    # Create Tab names for the request to split it up into different subrequest e.g. multiple locations 
     def create_tab_names(self, len_figures):
         if self.request.request_analysis[0] == 'basic_analysis':
             tab_names = []

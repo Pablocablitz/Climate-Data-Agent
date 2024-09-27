@@ -41,12 +41,9 @@ class EORequest():
         self.intervall_same_length = False
         self.sub_time_request = False
 
-        
+    
+    # pre 
     def post_process_request_variables(self):
-        
-#        if self.request_timeframe[0] not in ["None", None]:       
-#            for i in range(len(self.request_timeframe)):
-#                self.request_timeframe[i] = self.parse_date(self.request_timeframe[i])
 
         if (self.request_analysis[0] == 'predictions') and self.request_timeframes != ["None"]:
             self._check_timeframe_and_modify()
@@ -203,7 +200,8 @@ class EORequest():
         else:
             logger.error("Location could not be detected.")
             return None
-       
+    
+    # when prediction is detected take always the three years before the future to calculate the projection
     def _check_timeframe_and_modify(self):
         for timeframe in self.request_timeframes:
             
@@ -262,11 +260,14 @@ class EORequest():
         
         self.store_and_process_data(xr.open_dataset("ERA5_prophet_training_file.grib", engine="cfgrib"))
     
+    
+    # creating timeframe object
     def process_and_store_timeframe(self, timelist):
         if timelist not in ["None", None]:  
             for i in range(0, len(timelist), 2):
                 self.request_timeframes.append(TimeSpan(timelist[i], timelist[i+1]))
                 
+    # create with helper class list of subrequests to handle multi location and multi time for an unlimited level 
     def collect_eorequests(self):
         print(f'timeframe objects {self.request_timeframes}')
         id_request = 0
@@ -322,6 +323,7 @@ class EORequest():
             if idx < len(self.collected_sub_requests):
                 self.collected_sub_requests[idx].append_request_data(data)
                 
+    # after the data is downloaded when the timeframe has not a clean full year or years range it will take the separated requests and add them together
     def _combine_request_same_id(self):
         # Group requests by id_request
         grouped_subrequests = defaultdict(list)
