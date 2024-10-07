@@ -7,6 +7,7 @@ from datetime import datetime
 from utils.utils import Utilities
 from loguru import logger
 
+# Class for the creation of system prompts for the agents to get the parameters that needed to extract
 class PromptManager():
     def __init__(self, llm_handler: LargeLanguageModelProcessor):
         self.llm_handler = llm_handler
@@ -15,7 +16,7 @@ class PromptManager():
         self.request = None
         self.analysis_handler = AnalysisHandler()
         
-    
+    # function to build the specialized agent on basis of pre build system prompts and user prompts that get concatenated
     def retrieve_information(self, agent_type, user_prompt):
         system_prompt = self.construct_system_prompt(agent_type, user_prompt)
         max_retries = 5
@@ -50,15 +51,17 @@ class PromptManager():
                     logger.error("Max retries reached. Unable to retrieve information.")
                     return {"error": "Unable to retrieve information after multiple attempts."}  # Return an error after retries
 
+    # create callback to the user either to inform for missing information or for correct request
     def callback_assistant_to_user(self, agent_type, user_prompt, request: EORequest):
         self.request = request
         system_prompt = self.construct_system_prompt(agent_type, user_prompt)
         self.callback = system_prompt
         
-        
+    # specialized agents in form of prebuild system prompts are loaded of the yaml file 
     def __load_agents(self):
         self.__agents = Utilities.load_config_file("yaml/agents.yaml")
 
+    # construct the system prompts regarding several different cases 
     def construct_system_prompt(self, agent_type, user_prompt):
         # Check if the attribute name exists in the config
         if agent_type not in self.__agents['attributes']:
@@ -85,11 +88,11 @@ class PromptManager():
             system_prompt = system_prompt.format(specific_product_list = self.specific_product_list)
         elif agent_type == "review_agent":
             if len(self.request.request_timeframes) == 1:
-                timeframes = f'{self.request.request_timeframes[0].startdate_str} to {self.request.request_timeframes[0].enddate_str}'
+                timeframes = f'{self.request.request_timeframes[0].startdate.date()} to {self.request.request_timeframes[0].enddate.date()}'
             else:    
-                timeframes = ', '.join(f'{ts.startdate_str} to {ts.enddate_str}' for ts in self.request.request_timeframes[:-1])
+                timeframes = ', '.join(f'{ts.startdate_str} to {ts.enddate.date()}' for ts in self.request.request_timeframes[:-1])
             if len(self.request.request_timeframes) > 1:
-                timeframes += f' and {self.request.request_timeframes[-1].startdate_str} to {self.request.request_timeframes[-1].enddate_str}'
+                timeframes += f' and {self.request.request_timeframes[-1].startdate.date()} to {self.request.request_timeframes[-1].enddate.date()}'
 
             match(self.request.request_analysis[0]):
                 case "basic_analysis":

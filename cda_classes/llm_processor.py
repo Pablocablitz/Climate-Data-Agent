@@ -5,6 +5,7 @@ from huggingface_hub import login
 
 # login(token='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')
 
+# Class that generates the response on basis of the user and agents to collect the parameters for further pipeline
 class LargeLanguageModelProcessor():
     def __init__(self):
         self.llm = "meta-llama/Meta-Llama-3-8B-Instruct"

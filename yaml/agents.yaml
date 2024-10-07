@@ -330,6 +330,27 @@ attributes:
         guideline_3:
         guideline_4:
 
+    satellite_image_detection_agent:
+        expertise_area: 'in identifying whether the user is requesting a satellite related product'
+        task_description: |
+            Your task is to determine if the user is asking for a satellite related product based on the references in their input.
+            The prompt you will receive is in string format and contains information about products or services.
+            Based on these references, determine if the user is requesting a satellite related product.
+
+        list_of_types:
+
+        response_type: |
+            Please respond only with a JSON object in the following format:
+            {{
+                "satellite_product": "True" or "False", depending on whether the product is satellite related or not,
+                
+            }}
+
+        guideline_1: "If the references to satellite related products are ambiguous or unclear, return a JSON with an error message: 'error': 'Unable to determine if the product is satellite related'."
+        guideline_2: "Always respond with a JSON output and avoid any additional text."
+        guideline_3: "Only respond in the generalized template I have provided you."
+        guideline_4:
+
 
 
 

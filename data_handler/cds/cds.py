@@ -6,9 +6,10 @@ import numpy as np
 from utils.utils import Utilities
 from cda_classes.eorequest import EORequest
 from loguru import logger
+from datetime import timedelta
 from utils.utils import apply_timing_decorator
 
-
+# Class to process the request of the User when he is asking for CDS Data
 @apply_timing_decorator
 class ClimateDataStorageHandler():
     def __init__(self):
@@ -19,6 +20,9 @@ class ClimateDataStorageHandler():
         self.years = []
         self.requests = []
         self.variable = None
+        self.days = []
+        self.months = []
+        
 
         
     def construct_request(self, eo_request: EORequest):
@@ -36,10 +40,11 @@ class ClimateDataStorageHandler():
             self.location = sub_request.location
             self.extract_years_from_dates(sub_request.timeframe_object, eo_request.multi_time_request)
             self.extract_months_from_dates(sub_request.timeframe_object)
-            
+            self.extract_days_from_dates(sub_request.timeframe_object)
             request["variable"] = eo_request.variable
             request["year"] = self.years
             request["month"] = self.months
+            request['days'] = self.days
             request["area"] = sub_request.abbox
             self.datatype = self.cds_request_format["data_format"]
             self.requests.append(request)
@@ -68,8 +73,6 @@ class ClimateDataStorageHandler():
         
         return filename
     
-    
-    # TODO implement a method to process all Downloaded datasets
     def process(self, file):
         """
         Process the downloaded data.
@@ -87,7 +90,6 @@ class ClimateDataStorageHandler():
 
         return ds
         
-                
     def extract_years_from_dates(self,timeframe_object, multi_time_ranges):
         years = set()
         
@@ -112,6 +114,22 @@ class ClimateDataStorageHandler():
         # Sort years and convert to list of strings
         self.years = sorted(str(year) for year in years)
         
+    def extract_days_from_dates(self, timeframe_object):
+        start_date = timeframe_object.startdate
+        end_date =timeframe_object.enddate
+        
+        # Create a set to store unique days
+        days_set = set()
+
+        # Loop through the range of dates and add the days to the set
+        current_date = start_date
+        while current_date <= end_date:
+            days_set.add(f"{current_date.day:02}")  # Format day as two digits using f-string
+            current_date += timedelta(days=1)  # Move to the next day
+
+        # Convert the set to a sorted list of unique days
+        self.days = sorted(days_set)
+        
     def extract_months_from_dates(self, timeframe_object):
         start_date = timeframe_object.startdate
         end_date = timeframe_object.enddate
@@ -130,23 +148,25 @@ class ClimateDataStorageHandler():
         return self.variables
     
     def generate_cdsapi_code(self,eo_request:EORequest, dataset, variable, year, month, day, time, data_format, download_format, area):
-        code = f"""import cdsapi
+        
+        code = f"""
+                    import cdsapi
 
-    dataset = "{self.request_format["cds_request"]['name']}"
-    request = {{
-        'variable': {eo_request.variable},
-        'year': {self.years},
-        'month': {self.months},
-        'day': {self.cds_request_format['day']},
-        'time': {self.cds_request_format['time']},
-        'data_format': '{self.cds_request_format['data_format']}',
-        'download_format': '{self.cds_request_format['download_format']}',
-        'area': {eo_request.collected_eorequests.abbox}
-    }}
+                    dataset = "{self.request_format["cds_request"]['name']}"
+                    request = {{
+                        'variable': {eo_request.variable},
+                        'year': {self.years},
+                        'month': {self.months},
+                        'day': {self.cds_request_format['day']},
+                        'time': {self.cds_request_format['time']},
+                        'data_format': '{self.cds_request_format['data_format']}',
+                        'download_format': '{self.cds_request_format['download_format']}',
+                        'area': {eo_request.collected_eorequests.abbox}
+                    }}
 
-    client = cdsapi.Client()
-    client.retrieve(dataset, request).download()
-    """
+                    client = cdsapi.Client()
+                    client.retrieve(dataset, request).download()
+                """
         return code
     
     def _process_windspeed(self, ds):

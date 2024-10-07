@@ -13,6 +13,8 @@ from cda_classes.analysis_handler import AnalysisHandler
 from datetime import datetime
 from rapidfuzz import fuzz, process
 from utils.utils import apply_timing_decorator
+from sentence_transformers import SentenceTransformer, util
+
 
 DEBUGMODE = False
 
@@ -22,12 +24,13 @@ def load_llm():
     torch.cuda.empty_cache()
     gc.collect()
     llm = LargeLanguageModelProcessor()
-    return llm
+    sbert = SentenceTransformer('paraphrase-MiniLM-L6-v2')
+    return llm, sbert
 
 @apply_timing_decorator
 class Chatbot():
     def __init__(self):
-        self.llama3 = load_llm()
+        self.llama3, self.sbert = load_llm()
         self.prompt_manager = PromptManager(self.llama3)
         self.data_handler = DataHandler()
         self.vis_handler = VisualisationHandler()
@@ -65,7 +68,11 @@ class Chatbot():
                 
         # Step 3 - get product type
         self.request.request_product = self.prompt_manager.retrieve_information("product_agent", user_prompt)
-        
+        if len(self.request.request_product) > 1:
+            multi_variable_edge_case_message = "Please note that I can only process one climate variable at a time. For the best results, kindly provide a single variable in your request."
+            st.write(multi_variable_edge_case_message)
+            st.session_state.messages.append({"role": "assistant", "request_info": multi_variable_edge_case_message})
+            st.stop()
         # Step 4 - get specific product name
         if self.request.request_product[0] != "None" and self.request.request_product[0] != None:
             
@@ -111,6 +118,7 @@ class Chatbot():
                 # if new_request[0] == 'False':
                 combined_prompt = f'{user_prompt} and {st.session_state.past_request[-1].user_prompt}'
                 self.extract_information(combined_prompt)
+                user_prompt = combined_prompt
                 # else:
                 #     self.extract_information(user_prompt)
             elif self.request.request_type[0] == False or self.request.request_type[0] == 'False':
@@ -122,6 +130,17 @@ class Chatbot():
                 self.extract_information(user_prompt)
 
             self.request.process_request()
+                    # If the product was not found, prompt the user
+            if self.request.product_found == False and self.request.request_product[0] != 'None':
+                self.request.load_variable_topics_list()
+                 # Create a formatted message with bullet points
+                bullet_points = "\n".join(f"- {climate_topic}" for climate_topic in self.request.climate_topics)  # Join with newline for bullet points
+                requested_product_in_query = self._detect_similar_product_in_user_query(user_prompt, self.request.request_product[0])
+                not_available_topic_message = f"The requested product '{requested_product_in_query}' was not found. Please provide a valid variable from the collection:\n{bullet_points}"
+                # Display the message to the user with bullet points
+                st.write(not_available_topic_message)
+                st.session_state.messages.append({"role": "assistant", "request_info": not_available_topic_message})
+                st.stop()
             
             self.analysis_compatability()
             
@@ -232,10 +251,23 @@ class Chatbot():
 
             # Use fuzzy matching to find the best match for the found locations
             for loc in found_locations_lower:
-                match, score, _ = process.extractOne(loc, words_in_prompt, scorer=fuzz.token_sort_ratio)
-                if score >= threshold:
-                    matches_to_remove.append(loc)  # Store the location, not the word from prompt, for case consistency
-                    print(f'Match: {loc} with score: {score}')
+                # Check if the location consists of two words
+                loc_words = loc.split()
+                
+                if len(loc_words) == 2:
+                    # Perform word-by-word fuzzy matching
+                    for word in loc_words:
+                        match, score, _ = process.extractOne(word, words_in_prompt, scorer=fuzz.token_sort_ratio)
+                        if score >= threshold:
+                            matches_to_remove.append(match)  # Store the location, not the word from prompt, for case consistency
+                            print(f'Match: {match} with score: {score}')
+                else:
+                    # Fuzzy match for single-word locations
+                    match, score, _ = process.extractOne(loc, words_in_prompt, scorer=fuzz.token_sort_ratio)
+                    if score >= threshold:
+                        matches_to_remove.append(match)
+                        print(f'Match: {match} with score: {score}')
+
 
             # Clean the user prompt based on found matches
             cleaned_prompt = user_prompt
@@ -272,19 +304,36 @@ class Chatbot():
     def analysis_compatability(self):
         now = datetime.now()
         date_str = now.strftime('%Y')
+        cutoff_year_past = 1950  # Define the cutoff year as 1950
+        # Define the cutoff date as July 1, 2024
+        cutoff_date_present = datetime(2024, 8, 1)  
+        
         if self.request.request_timeframes[0] != "None":
             for timeframe in self.request.request_timeframes:
+                # Check for basic_analysis or comparison
                 if self.request.request_analysis[0] == 'basic_analysis' or self.request.request_analysis[0] == 'comparison':
-                    if timeframe.startdate.year >= now.year or timeframe.enddate.year >= now.year:
+                    if timeframe.startdate >= cutoff_date_present or timeframe.enddate >= cutoff_date_present:
                         with st.chat_message("assistant"):
-                            analysis_incompatability = f"The {self.request.request_analysis[0]} cannot be shown for the current year: {date_str} and the following years. Please try another time frame"
+                            analysis_incompatability = f"The {self.request.request_analysis[0]} cannot be shown for the current date and beyond (after July 2024). "
+                            "Please try another time frame."
                             st.write(analysis_incompatability)
                             st.session_state.messages.append({"role": "assistant", "request_info": analysis_incompatability})
                             st.stop()
-                elif self.request.request_analysis[0] == 'predictions':
-                    if timeframe.prediction_startdate.year < now.year or timeframe.prediction_enddate.year < now.year:
+                    # Check if the timeframe includes years earlier than 1950
+                    elif timeframe.startdate.year < cutoff_year_past or timeframe.enddate.year < cutoff_year_past:
                         with st.chat_message("assistant"):
-                            analysis_incompatability = f"The {self.request.request_analysis[0]} cannot be shown for the previous years before {date_str}. Please try a timeframe towards the future!"
+                            analysis_incompatibility = f"The {self.request.request_analysis[0]} cannot be shown for years before 1950. "
+                            "Please try another timeframe."
+                            st.write(analysis_incompatibility)
+                            st.session_state.messages.append({"role": "assistant", "request_info": analysis_incompatibility})
+                            st.stop()
+                        
+                # Check for predictions
+                elif self.request.request_analysis[0] == 'predictions':
+                    if timeframe.prediction_startdate < cutoff_date_present or timeframe.prediction_enddate < cutoff_date_present:
+                        with st.chat_message("assistant"):
+                            analysis_incompatability = f"The {self.request.request_analysis[0]} cannot be shown for previous years before July 2024. "
+                            "Please try a timeframe towards the future!"
                             st.write(analysis_incompatability)
                             st.session_state.messages.append({"role": "assistant", "request_info": analysis_incompatability})
                             st.stop()
@@ -337,3 +386,16 @@ class Chatbot():
             tab_names = [f"{location} {concatenated_date_ranges}"]
             analysis_header = 'Comparison over Time'
             return tab_names, analysis_header
+        
+    def _detect_similar_product_in_user_query(self, user_prompt, product):
+        # Load a lightweight SBERT model
+
+        # Get embeddings for the sentence tokens
+        sentence_embeddings = self.sbert.encode(user_prompt.split())
+        target_embedding = self.sbert.encode([product])
+
+        # Compute cosine similarity between the target word and sentence words
+        similarities = util.cos_sim(target_embedding, sentence_embeddings)
+        print(f"Most similar word to '{product}' is: {user_prompt.split()[similarities.argmax()]}")
+        
+        return user_prompt.split()[similarities.argmax()]

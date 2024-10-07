@@ -3,6 +3,7 @@ import string
 import xarray as xr
 import numpy as np
 import math
+import calendar
 
 from geopy.geocoders import Nominatim
 from datetime import datetime, timedelta
@@ -40,6 +41,8 @@ class EORequest():
         self.collected_sub_requests = []
         self.intervall_same_length = False
         self.sub_time_request = False
+        self.product_found = None
+        self.climate_topics = None
 
     
     # pre 
@@ -48,7 +51,7 @@ class EORequest():
         if (self.request_analysis[0] == 'predictions') and self.request_timeframes != ["None"]:
             self._check_timeframe_and_modify()
             logger.info("checked for timeframe")
-        
+        print(self.request_locations)
         if self.request_locations[0] not in ["None", None]:  
             for location in self.request_locations:
                 try:
@@ -89,6 +92,7 @@ class EORequest():
     def process_request(self):
         self.__check_validity_of_request()
         if not self.errors:
+            self.product_found = False  # Flag to track if a valid product was found
             for product in self.load_variables()[self.request_product[0]]:
                 if product["name"] == self.request_specific_product[0]:
                     self.variable = product["variable_name"]
@@ -98,8 +102,10 @@ class EORequest():
                     self.variable_short_name = product["short_name"]
                     self.vmin = product["vmin"]
                     self.vmax = product["vmax"]
-
-
+                    self.product_found = True  # Mark as found
+                    print(self.product_found)
+        print(self.product_found)
+        
     def construct_product_agent_instruction(self):
         product_list = [product['name'] for product in self.load_variables()[self.request_product[0]]]
         instruction_format = f"'{self.request_product[0]}':\n- {product_list}"
@@ -107,6 +113,13 @@ class EORequest():
     
     def load_variables(self):
         return Utilities.load_config_file("yaml/variables.yaml") 
+    
+    def load_variable_topics_list(self):
+        # Load the variables from the YAML file
+        variables = Utilities.load_config_file("yaml/variables.yaml") 
+        
+        # Get the list of general climate topics (keys of the dictionary)
+        self.climate_topics = list(variables.keys())
     
     def store_and_process_data(self):
         if self.sub_time_request:
@@ -275,41 +288,116 @@ class EORequest():
             
             for timeframe in self.request_timeframes:
                 
-                # Calculate the duration
-                months = (timeframe.enddate.month - timeframe.startdate.month)
                 
+                
+                start = timeframe.startdate
+                end = timeframe.enddate
+                
+                if start > end:
+                    print(f"Start date {start} is after end date {end} for location={location}. Skipping.")
+                    continue
+            
+            # Check if start and end are the same
+                if start == end:
+                    print(f"Start date is the same as end date {start} for location={location}. Creating a single day subrequest.")
+                    subrequest = SubRequest(
+                        location,
+                        self.original_bounding_box[idx],
+                        self.adjusted_bounding_box[idx],
+                        TimeSpan(start, end),
+                        self.variable_short_name,
+                        id_request
+                    )
+                    self.collected_sub_requests.append(subrequest)
+                    id_request += 1
+                    continue  # Skip to the next timeframe
+                
+                is_start, is_end = self.check_start_end_dates(start, end)
+                print(is_start, is_end)
+                # Calculate the total number of days between the two dates
+                days_diff = (end - start).days
 
-                            # Check if the duration is less than one year
-                if months < 11:
-                    self.sub_time_request = True
-                    current_date = timeframe.startdate
-                    while current_date <= timeframe.enddate:
-                        # Calculate the next year
-                        next_year = current_date.year + 1
-                        
-                        # Determine the end date for the current year segment
-                        if next_year > timeframe.enddate.year:
-                            year_end_date = timeframe.enddate  # Last segment is capped by the overall end date
-                        else:
-                            year_end_date = datetime(next_year, 1, 1) - timedelta(days=1)  # Last day of the current year
-                            
-                                    # Create SubSubRequest for the time span from current_date to year_end_date
-                        subrequest = SubRequest(
-                            location,
-                            self.original_bounding_box[idx],
-                            self.adjusted_bounding_box[idx],
-                            TimeSpan(current_date, year_end_date),
-                            self.variable_short_name,
-                            id_request
-                        )
-                        self.collected_sub_requests.append(subrequest)
-                        
-                        # Move to the first day of the next year
-                        current_date = year_end_date + timedelta(days=1)
-                        
-                    id_request +=1
+                # Total number of years including the start and end year
+                total_years = (end.year - start.year) + 1
+
+                # Use the calendar library to calculate leap days between the start and end years
+                leap_days = calendar.leapdays(start.year, end.year + 1)
+
+                # Calculate the number of regular days by subtracting leap days from total days
+                regular_days = days_diff - leap_days
+
+                # Calculate the average number of days per year
+                per_year_days = regular_days / total_years
+                # Calculate the duration
+                
+                print(per_year_days)
+                # Check if the duration is less than one year
+                if per_year_days < 364:
                     
-                    self.sub_time_request = True
+                    if not is_start or not is_end:
+                        current_date = timeframe.startdate
+                        end_date = timeframe.enddate
+                    
+                        while current_date <= end_date:
+                            # Determine the end of the current segment, which is the end of the current month
+                            year = current_date.year
+                            month = current_date.month
+                            
+                            # Get the last day of the current month
+                            last_day_of_month = calendar.monthrange(year, month)[1]
+                            month_end_date = datetime(year, month, last_day_of_month)
+                            
+                            # If the calculated month end date exceeds the overall timeframe's end date, cap it
+                            if month_end_date > end_date:
+                                month_end_date = end_date
+                            
+                            # Create sub-request for the current segment (partial or full month)
+                            subrequest = SubRequest(
+                                location,
+                                self.original_bounding_box[idx],
+                                self.adjusted_bounding_box[idx],
+                                TimeSpan(current_date, month_end_date),
+                                self.variable_short_name,
+                                id_request
+                            )
+                            self.collected_sub_requests.append(subrequest)
+                            print(f'Created SubRequest: {subrequest}')
+                            
+                            # Move to the first day of the next month
+                            current_date = month_end_date + timedelta(days=1)
+                            
+                            id_request += 1
+                        
+                    else:
+                        self.sub_time_request = True
+                        current_date = timeframe.startdate
+                        while current_date <= timeframe.enddate:
+                            # Calculate the next year
+                            next_year = current_date.year + 1
+                            
+                            # Determine the end date for the current year segment
+                            if next_year > timeframe.enddate.year:
+                                year_end_date = timeframe.enddate  # Last segment is capped by the overall end date
+                            else:
+                                year_end_date = datetime(next_year, 1, 1) - timedelta(days=1)  # Last day of the current year
+                                
+                                        # Create SubSubRequest for the time span from current_date to year_end_date
+                            subrequest = SubRequest(
+                                location,
+                                self.original_bounding_box[idx],
+                                self.adjusted_bounding_box[idx],
+                                TimeSpan(current_date, year_end_date),
+                                self.variable_short_name,
+                                id_request
+                            )
+                            self.collected_sub_requests.append(subrequest)
+                            
+                            # Move to the first day of the next year
+                            current_date = year_end_date + timedelta(days=1)
+                            
+                        id_request +=1
+                        
+                        self.sub_time_request = True
                     
                 else:
                     sub_request = SubRequest(location, self.original_bounding_box[idx], self.adjusted_bounding_box[idx], timeframe, self.variable_short_name, id_request)
@@ -367,4 +455,14 @@ class EORequest():
         merged_request.append_request_data(concatenated_data)  # Assuming data is merged here
         
         return merged_request
-                
+    
+    def check_start_end_dates(self, start_date, end_date): 
+
+        # Check if the start date is the first day of the month
+        is_start_first_day = (start_date.day == 1)
+
+        # Check if the end date is the last day of the month
+        last_day_of_end_month = calendar.monthrange(end_date.year, end_date.month)[1]
+        is_end_last_day = (end_date.day == last_day_of_end_month)
+
+        return is_start_first_day, is_end_last_day

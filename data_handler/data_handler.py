@@ -7,7 +7,7 @@ from data_handler.cds import ClimateDataStorageHandler
 from cda_classes.eorequest import EORequest
 from utils.utils import apply_timing_decorator
 
-
+# Class to transform the parameters into a valid request
 @apply_timing_decorator
 class DataHandler():
     def __init__(self, ):
@@ -15,18 +15,11 @@ class DataHandler():
         # self.cds = ClimateDataStorageHandler(self.request)
         self.data_available_in_db = False
         self.processed_datasets = {}
+        
     def construct_request(self, eo_request: EORequest):
         # if (eo_request.datasource == "CDS"):
         self.request_cds.construct_request(eo_request)
-        
-        
-
-    def construct_multi_request(self, eo_request: EORequest):
-        
-        # if (eo_request.datasource == "CDS"):
-        pass    
     
-
     def download(self,  eo_request: EORequest):
         
         self.construct_request(eo_request)
@@ -34,9 +27,6 @@ class DataHandler():
         if not self.data_available_in_db:
             self.request_cds.get_data(eo_request.collected_sub_requests)
             
-            
-
-        
     def check_for_data_in_database(self, eo_request):
         self.data_available_in_db = True
         grib_folder = '/my_volume/cds_data/ERA_5_LAND_2000_2024'
@@ -44,6 +34,7 @@ class DataHandler():
         for sub_request, request in zip(eo_request.collected_sub_requests, self.request_cds.requests):
             target_years = request['year']
             target_months = request['month']
+            traget_days = request['days']
             target_area = request['area']
             if eo_request.variable_short_name == 'w10':
                 target_variable = 'u10'
@@ -91,7 +82,7 @@ class DataHandler():
             if datasets:
                 ds_database = xr.concat(datasets, dim='time')
                 ds_sorted = ds_database.sortby('time')  # Sort by the time coordinate
-
+                print(ds_sorted)
                 # Check if the dataset is empty by checking the size or any of the dimensions
                 if ds_sorted.size == 0:
                     self.data_available_in_db = False

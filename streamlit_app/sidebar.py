@@ -59,21 +59,23 @@ def sidebar():
     analysis_type_list = ["Basic Analysis", "Comparison", "Prediction"]
     analysis_type_explanations = {
         "Basic Analysis": (
-            "Basic Analysis provides fundamental statistical insights into the dataset and is the default mode when no Analysis Type was selected. "
-            "It includes the calculation of the minimum and maximum values, as well as the standard deviation. "
-            "This analysis is useful for understanding the overall range and variability of the data."
+            "**Basic Analysis** provides fundamental statistical insights into the dataset and serves as the default mode when no specific analysis type is selected. This analysis includes:\n\n"
+            "- **Minimum Value**: The lowest recorded value in the dataset.\n"
+            "- **Maximum Value**: The highest recorded value in the dataset.\n"
+            "- **Standard Deviation**: A measure of the amount of variation or dispersion of a set of values.\n\n"
+            "This analysis is essential for understanding the overall range and variability of the data, helping users identify the spread and central tendency of the dataset."
         ),
         "Comparison": (
-            "Comparison analysis allows for the evaluation of differences between multiple data points. "
-            "It can compare data across different locations or between different time periods. "
-            "For multi-location comparisons, it visualizes data from multiple locations side-by-side. "
-            "For multi-time comparisons, it contrasts data from two distinct time ranges to identify temporal changes."
+            "**Comparison Analysis** enables users to evaluate differences between multiple data points effectively. It can compare data across:\n\n"
+            "- **Different Locations**: Visualizes data from multiple locations side-by-side, allowing for easy geographical comparisons.\n"
+            "- **Different Time Periods**: Contrasts data from two distinct time ranges to identify temporal changes and trends over time.\n\n"
+            "This analysis type is particularly useful for detecting variations in patterns or behaviors in data collected under different conditions or timeframes."
         ),
         "Prediction": (
-            "Prediction analysis uses historical data to forecast future trends. "
-            "By applying predictive modeling techniques, such as time series forecasting with Prophet, "
-            "this analysis generates predictions for a specified future period. "
-            "The output includes forecasted data points along with a confidence interval for each prediction."
+            "**Prediction Analysis** utilizes historical data to forecast future trends. It applies advanced predictive modeling techniques, such as time series forecasting with Prophet, to generate predictions for specified future periods. The output includes:\n\n"
+            "- **Forecasted Data Points**: Estimated future values based on historical trends.\n"
+            "- **Confidence Intervals**: Ranges that provide a measure of uncertainty around each prediction, indicating the reliability of the forecasts.\n\n"
+            "This analysis is invaluable for planning and decision-making, as it helps users anticipate future conditions based on past data."
         ),
     }
     st.markdown("<hr style='border: 1px solid #FFCC4D;'>", unsafe_allow_html=True)
@@ -97,6 +99,26 @@ def sidebar():
         "Compare the Precipitation of Rome and London between 2015 and 2020",
         "Show me a Prediction of the Temperature of London between 2020 to 2023"
     ]
-    for idx, prompt in enumerate(container_data):
+    
+    container_data_pop_up = [
+        "### Climate Variable: \n- **Temperature**  \n"
+        "### Specified Climate Variable: \n- **2m Temperature**  \n"
+        "### Location: \n- **Rome**  \n"
+        "### Time Range: \n- **2015-01-01 to 2020-12-31**  \n"
+        "### Analysis Type: \n- **Basic Analysis**  \n",
+        
+        "### Climate Variable: \n- **Precipitation**  \n"
+        "### Specified Climate Variable: \n- **Total Precipitation**  \n"
+        "### Locations: \n- **Rome**  \n- **London**  \n"
+        "### Time Range: \n- **2015-01-01 to 2020-12-31**  \n"
+        "### Analysis Type: \n- **Comparison**  \n",
+        
+        "### Climate Variable: \n- **Evapuration**  \n"
+        "### Specified Climate Variable: \n- **Total Evapuration**  \n"
+        "### Location: \n- **London**  \n"
+        "### Time Range: \n- **2020-01-01 to 2023-12-31**  \n"
+        "### Analysis Type: \n- **Prediction**  \n"
+    ]
+    for prompt, result in zip(container_data, container_data_pop_up):
         with st.popover(f"{prompt}", use_container_width=100):
-            st.write(f"{prompt}")
+            st.write(f"{result}")

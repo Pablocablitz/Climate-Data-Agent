@@ -12,8 +12,9 @@ from prophet.plot import plot_plotly, plot_components
 from dateutil.relativedelta import relativedelta
 from loguru import logger
 from utils.utils import apply_timing_decorator
+from datetime import datetime
 
-
+# Class to handle the three types of analysis that the agent detected 
 @apply_timing_decorator
 class AnalysisHandler():
     def __init__(self):
@@ -30,7 +31,7 @@ class AnalysisHandler():
             '#bcbd22',  # Olive Green
             '#17becf'   # Teal
         ]
-    
+    # Function to create the basic analysis for the user
     def basic_analysis(self, eo_request: EORequest):
         # a basic analysis contains:
         # * minima and maxima
@@ -42,31 +43,42 @@ class AnalysisHandler():
         
             minval, maxval = self.get_min_max_from_dataframe(df)
             
+            avgval = df['y'].mean()
+            
             figure = self.get_plot_from_dataframe(df, eo_request.variable_long_name + " [" + eo_request.variable_units + "]")
-            message = self.get_basic_analysis_string(minval, maxval, self.get_std_from_dataframe(df), eo_request.variable_units)
+            message = self.get_basic_analysis_string(minval, maxval, self.get_std_from_dataframe(df), avgval, eo_request.variable_units)
             figures.append(figure)
             messages.append(message)
             
         return figures, messages
-
-    def significant_event_detection(self, eo_request: EORequest):
-        # * Outlier/Anomaly detection
-        logger.warning("Attempted significant event detection, but this is not implemented yet!")
-
+    # function that creates the prediction on the user's needs
     def predictions(self, eo_request: EORequest):
         figures = []
         messages = []
         for request in eo_request.collected_sub_requests:
             df = self._get_dataframe_from_eorequest(request)
-            print(df)
             model = Prophet()
             
             model.fit(df)
-            
+            periods=request.timeframe_object.prediction_number*365
             # figure out what a period is, possibly calculate timesteps in order to ensure predicitons are always for e.g. 1 year
-            future = model.make_future_dataframe(periods=request.timeframe_object.prediction_number*365)
+            future = model.make_future_dataframe(periods=periods)
             forecast = model.predict(future)
-            message = f"The following prediction was performed based on the downloaded data. The prediction encompasses {request.timeframe_object.prediction_number*365} periods [TBC]"
+            
+            # Find the highest and lowest predicted values
+            highest_value = self.round_to_sig_figs(forecast['yhat'].max(), 3)
+            lowest_value = self.round_to_sig_figs(forecast['yhat'].min(), 3)
+            
+            message = (
+                f"The prediction has been generated based on the historical {eo_request.variable_long_name} data provided. "
+                f"The forecast covers the period from **{request.timeframe_object.prediction_startdate.date()}** to **{request.timeframe_object.prediction_enddate.date()}** "
+                f"and spans a total of **{periods} days**. "
+                f"\n\nYou can expect the following key insights:\n\n"
+                f"- **Highest Predicted Value**: {highest_value} {eo_request.variable_units}\n"
+                f"- **Lowest Predicted Value**: {lowest_value} {eo_request.variable_units}\n"       
+                f"- **Lower Confidence Interval**: {self.round_to_sig_figs(forecast['yhat_lower'].min(), 3)} {eo_request.variable_units}\n"  # Minimum lower bound
+                f"- **Upper Confidence Interval**: {self.round_to_sig_figs(forecast['yhat_upper'].max(), 3)} {eo_request.variable_units}\n"  # Maximum upper bound
+            )
             messages.append(message)
             
             # Create a Plotly figure
@@ -115,27 +127,47 @@ class AnalysisHandler():
             # Customize the layout
             fig.update_layout(
                 title='Forecast vs Training Data',
-                xaxis_title='Date',
-                yaxis_title='Value',
+                xaxis_title='Period',
+                yaxis_title=f"{eo_request.variable_long_name} [{eo_request.variable_units}]",
                 template='plotly_white'
             )
             figures.append(fig)
         # figure = plot_plotly(model, forecast)
         
         return figures, messages
-        
     
+    # creating the comparison 
     def comparison(self, eo_request: EORequest):
         figures = []
         messages = []
         if eo_request.multi_loc_request == True:
             fig = go.Figure()
+            formatted_loc_string = Utilities.join_locations(eo_request.request_locations)
+            message = (
+                    f"**Comparison of {eo_request.variable_long_name} across multiple locations:**\n\n"
+                    f"This plot compares the values of **{eo_request.variable_long_name}** for the following locations: "
+                    f"{formatted_loc_string}.\n\n"
+                    "Below is a summary of the key statistics for each location:\n"
+                )
             for sub_request, color in zip(eo_request.collected_sub_requests, self.colors):
                 df = self._get_dataframe_from_eorequest(sub_request)
-                fig = self.get_plotly_figure_multi_loc(fig, df, eo_request.variable_long_name, sub_request.location, color)
-                formatted_loc_string = Utilities.join_locations(eo_request.request_locations)
-                message = f"Comparing the locations {formatted_loc_string}"
-                messages.append(message)
+                fig = self.get_plotly_figure_multi_loc(fig, df, eo_request.variable_long_name, sub_request.location,color, eo_request.variable_units)
+                
+                # Calculate the statistics for each location
+                avg_value = df['y'].mean()
+                min_value = df['y'].min()
+                max_value = df['y'].max()
+                range_value = max_value - min_value
+                # Append statistics for the current location
+                message += (
+                    f"- **Location**: {sub_request.location}\n"
+                    f"  - **Average**: {avg_value:.2f} {eo_request.variable_units}\n"
+                    f"  - **Min**: {round(min_value, 2)} {eo_request.variable_units}, "
+                    f"**Max**: {round(max_value, 2)} {eo_request.variable_units}\n"
+                    f"  - **Range**: {round(range_value, 2)} {eo_request.variable_units}\n\n"
+                )
+                
+            messages.append(message)
             figures.append(fig)    
             return figures, messages
         
@@ -163,14 +195,26 @@ class AnalysisHandler():
             fig = go.Figure()  # Initialize empty figure
             used_colors = []
             
+                    # Initialize a message to describe the time range comparison
+            message = (
+                f"**Comparison of {eo_request.variable_long_name.capitalize()} across different time ranges:**\n\n"
+                "Below is a summary of the key statistics for each time range:\n"
+            )
+            
             # Iterate over each request and generate the plot
             for sub_request in eo_request.collected_sub_requests:
                 df = self._get_dataframe_from_eorequest(sub_request)
-                start_date = sub_request.timeframe_object.startdate_str
-                end_date = sub_request.timeframe_object.enddate_str
+                start_date = sub_request.timeframe_object.startdate.date()
+                end_date = sub_request.timeframe_object.enddate.date()
                 time_ranges.append(f"{start_date}-{end_date}")
                 
-                        # Select a color that hasn't been used yet
+                # Calculate the statistics for each time range
+                avg_value = df['y'].mean()
+                min_value = df['y'].min()
+                max_value = df['y'].max()
+                range_value = max_value - min_value
+                    
+                # Select a color that hasn't been used yet
                 for color in self.colors:
                     if color not in used_colors:
                         # Use the first unused color and add to used_colors
@@ -182,14 +226,29 @@ class AnalysisHandler():
                     used_colors.append(color)
                     
                 # Update the figure by passing it to get_plotly_figure_multi_time
-                fig = self.get_plotly_figure_multi_time(fig, df, eo_request.variable_long_name, color, eo_request.intervall_same_length, sub_request.timeframe_object)
+                fig = self.get_plotly_figure_multi_time(fig, df, eo_request.variable_long_name, color, eo_request.intervall_same_length, sub_request.timeframe_object, eo_request.variable_units)
                 
-            print(used_colors)
+                # Append statistics for the current time range
+                message += (
+                    f"- **Time Range**: {start_date} to {end_date}\n"
+                    f"  - **Average**: {avg_value:.2f} {eo_request.variable_units}\n"
+                    f"  - **Min**: {min_value:.2f} {eo_request.variable_units}, "
+                    f"**Max**: {max_value:.2f} {eo_request.variable_units}\n"
+                    f"  - **Range**: {range_value:.2f} {eo_request.variable_units}\n\n"
+                )
+                
             formatted_time_ranges = " and ".join(time_ranges)
             figures.append(fig)  # Store the figure
-            messages.append(f"Comparing the time ranges: {formatted_time_ranges}")  # Add the comparison message
+            messages.append(message)  # Add the comparison message
         
             return figures, messages
+        
+    def round_to_sig_figs(self, x, sig_figs):
+        """Round to a specified number of significant figures using numpy."""
+        if x == 0:
+            return 0
+        else:
+            return np.round(x, sig_figs - int(np.floor(np.log10(abs(x)))) - 1)
         
     def _get_dataframe_from_eorequest(self, request):
         
@@ -209,8 +268,8 @@ class AnalysisHandler():
     
     def _get_filtered_dataset(self, request):
         
-        start_date = request.timeframe_object.startdate_str
-        end_date = request.timeframe_object.enddate_str
+        start_date = datetime.strftime(request.timeframe_object.startdate, "%Y-%m-%d")
+        end_date = datetime.strftime(request.timeframe_object.enddate, "%Y-%m-%d")
         # Select time range first
         ds = request.data.sel(time=slice(start_date, end_date))
                 
@@ -257,44 +316,70 @@ class AnalysisHandler():
             monthly_means (list): List of monthly mean values.
         """
         ds_filtered = self._get_filtered_dataset(request)
-        print(type(ds_filtered))
         # Extract year and month from time coordinates for labeling
-        months = ds_filtered['time'].dt.strftime('%Y-%m-%d').values
-        monthly_means = ds_filtered.groupby('time.month').mean(dim=['latitude', 'longitude']).values 
-        
+        try:
+            
+            # Attempt to group by month and calculate the monthly mean
+            months = ds_filtered['time'].dt.strftime('%Y-%m-%d').values
+            monthly_means = ds_filtered.groupby('time.month').mean(dim=['latitude', 'longitude']).values
+        except ValueError:
+            # If grouping by month fails (e.g., time only has days), compute mean over available time range
+            months = ds_filtered['time'].dt.strftime('%Y-%m-%d').values
+            monthly_means = ds_filtered.mean(dim=['latitude', 'longitude']).values
+
+        # Create a DataFrame with the results
         df = pd.DataFrame({
             'time': months,
-            'value': monthly_means
-            })
-        
+            'y': monthly_means
+        })
         return df
     
 
 
     
     def get_plot_from_dataframe(self, df: pd.DataFrame, yaxis_title):
-        figure = px.line(df, x='time', y='value', title="Means over area of interest")
-        figure.update_layout(yaxis_title = yaxis_title, xaxis_title = "Time")
+        # Check if there's only one data point in the DataFrame
+        if len(df) == 1:
+            # If there's only one data point, use markers
+            figure = px.line(df, x='time', y='y', title="Means over area of interest", markers=True)
+        else:
+            # Otherwise, use only lines by default
+            figure = px.line(df, x='time', y='y', title="Means over area of interest")
+            
+        # Customize layout for the figure
+        figure.update_layout(yaxis_title = yaxis_title, xaxis_title = "Period")
+        
         return figure
     
     def get_min_max_from_dataframe(self, df: pd.DataFrame):
-        minima = df['value'].min()
-        maxima = df['value'].max()
+        minima = df['y'].min()
+        maxima = df['y'].max()
         return Utilities.significant_round(minima, 4), Utilities.significant_round(maxima, 4)
     
     def get_std_from_dataframe(self, df: pd.DataFrame):
-        standard_deviation = df['value'].std()
+        standard_deviation = df['y'].std()
         return Utilities.significant_round(standard_deviation, 4)
         
     
-    def get_basic_analysis_string(self, minval: float, maxval: float, std: float, unit: str):
+    def get_basic_analysis_string(self, minval: float, maxval: float, std: float, avg: float, unit: str):
         unformatted_string = Utilities.load_config_file("yaml/analysis.yaml")["basic_analysis"]
-        temp_prompt = string.Template(unformatted_string)
-        constructed_string = temp_prompt.safe_substitute(
-            {'standard_deviation' : std,
-             'min_val': minval,
-             'max_val': maxval,
-             'unit': unit})        
+        
+        # Apply rounding to the values for better readability (2 decimal places)
+        rounded_minval = round(minval, 2)
+        rounded_maxval = round(maxval, 2)
+        rounded_std = round(std, 2)
+        rounded_avg = round(avg, 2)
+        rounded_range = round(maxval - minval, 2) 
+        # Construct the string with formatted bullet points
+        constructed_string = (
+            "**Basic Dataset Analysis:**\n\n"
+            "Based on a simple analysis, the following is observed about the dataset:\n\n"
+            f"- **Standard Deviation**: {rounded_std} {unit}\n"
+            f"- **Average**: {rounded_avg:.2f} {unit}\n"
+            f"- **Minimum Value**: {rounded_minval} {unit}\n"
+            f"- **Maximum Value**: {rounded_maxval} {unit}\n"
+            f"- **Range**: {rounded_range} {unit}\n"
+        )
                
         return constructed_string
     
@@ -316,7 +401,7 @@ class AnalysisHandler():
         
         return dataframes
     
-    def get_plotly_figure_multi_loc(self, fig:go.Figure, df, variable_name, location, color):        
+    def get_plotly_figure_multi_loc(self, fig:go.Figure, df, variable_name, location, color, variable_unit):        
        
         fig.add_trace(go.Scatter(
             x=df[f'ds'],
@@ -328,16 +413,16 @@ class AnalysisHandler():
 
         # Customize layout
         fig.update_layout(
-            title='Monthly Means Comparison',
-            xaxis_title='Time',
-            yaxis_title=variable_name,
+            title='Comparison over Means of each Locations',
+            xaxis_title='Period',
+            yaxis_title=f"{variable_name} [{variable_unit}]",
             legend_title='Datasets',
             template='plotly'
         )
         
         return fig
     
-    def get_plotly_figure_multi_time(self, fig: go.Figure, df, variable_name, color, intervall_same_length, timeframe):
+    def get_plotly_figure_multi_time(self, fig: go.Figure, df, variable_name, color, intervall_same_length, timeframe, variable_unit):
         
         # Handle same-length intervals
         if intervall_same_length:
@@ -388,14 +473,14 @@ class AnalysisHandler():
             # Customize layout for same-length intervals
             fig.update_layout(
                 title='Time Frame Comparison',
-                xaxis_title='Months',
-                yaxis_title=variable_name,
+                xaxis_title='Period',
+                yaxis_title=f"{variable_name} [{variable_unit}]",
                 legend_title='Datasets',
                 template='plotly',
                 xaxis=dict(
                     tickvals=tickvals,  # Set ticks for each day of the year
                     ticktext=ticktext,  # Month-Day labels
-                    title='Month Day'
+                    title='Period'
                 )
             )
         # Handle different-length intervals (normalize by day of the year)
@@ -426,8 +511,8 @@ class AnalysisHandler():
             # Customize layout for different-length intervals
             fig.update_layout(
                 title="Comparison of Years Over Time by Month and Day",
-                xaxis_title="Month-Day",
-                yaxis_title=variable_name,
+                xaxis_title="Period",
+                yaxis_title=f"{variable_name} [{variable_unit}]",
                 legend_title="Year",
                 hovermode="x unified",  # Unified hover mode
                 xaxis=dict(
