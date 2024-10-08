@@ -31,11 +31,16 @@ class DataHandler():
         self.data_available_in_db = True
         grib_folder = '/my_volume/cds_data/ERA_5_LAND_2000_2024'
         
-        for sub_request, request in zip(eo_request.collected_sub_requests, self.request_cds.requests):
+        for sub_request, request in zip(
+            eo_request.collected_sub_requests, 
+            self.request_cds.requests
+        ):
+            
             target_years = request['year']
             target_months = request['month']
-            traget_days = request['days']
             target_area = request['area']
+            
+            # Handle special case of wind speed variable
             if eo_request.variable_short_name == 'w10':
                 target_variable = 'u10'
             else:    
@@ -82,7 +87,7 @@ class DataHandler():
             if datasets:
                 ds_database = xr.concat(datasets, dim='time')
                 ds_sorted = ds_database.sortby('time')  # Sort by the time coordinate
-                print(ds_sorted)
+            
                 # Check if the dataset is empty by checking the size or any of the dimensions
                 if ds_sorted.size == 0:
                     self.data_available_in_db = False

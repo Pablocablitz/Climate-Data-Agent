@@ -7,7 +7,7 @@ import csv
 import os
 
 from loguru import logger
-from datetime import datetime, timedelta
+from datetime import datetime
 
 class Utilities():
     

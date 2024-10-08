@@ -23,8 +23,6 @@ class ClimateDataStorageHandler():
         self.days = []
         self.months = []
         
-
-        
     def construct_request(self, eo_request: EORequest):
         
         self.cds_request_format = self.request_format["cds_request"]["request"]
@@ -38,20 +36,25 @@ class ClimateDataStorageHandler():
             self.specific_product = eo_request.request_specific_product
             self.variables = eo_request.variables
             self.location = sub_request.location
-            self.extract_years_from_dates(sub_request.timeframe_object, eo_request.multi_time_request)
+            
+            self.extract_years_from_dates(
+                sub_request.timeframe_object, 
+                eo_request.multi_time_request
+            )
             self.extract_months_from_dates(sub_request.timeframe_object)
             self.extract_days_from_dates(sub_request.timeframe_object)
+            
             request["variable"] = eo_request.variable
             request["year"] = self.years
             request["month"] = self.months
             request['days'] = self.days
             request["area"] = sub_request.abbox
             self.datatype = self.cds_request_format["data_format"]
+            
             self.requests.append(request)
 
     def get_data(self, collected_sub_requests):
         
-        # file_names = ['/home/eouser/programming/Climate-Data-Agent/ERA5_Rome.grib','/home/eouser/programming/Climate-Data-Agent/ERA5_London.grib']
         for sub_request, request in zip(collected_sub_requests, self.requests):
             name = self.request_format["cds_request"]["name"]
             print(request, name)
@@ -146,28 +149,6 @@ class ClimateDataStorageHandler():
     def load_variables(self):
         self.variables = Utilities.load_config_file("yaml/variables.yaml") 
         return self.variables
-    
-    def generate_cdsapi_code(self,eo_request:EORequest, dataset, variable, year, month, day, time, data_format, download_format, area):
-        
-        code = f"""
-                    import cdsapi
-
-                    dataset = "{self.request_format["cds_request"]['name']}"
-                    request = {{
-                        'variable': {eo_request.variable},
-                        'year': {self.years},
-                        'month': {self.months},
-                        'day': {self.cds_request_format['day']},
-                        'time': {self.cds_request_format['time']},
-                        'data_format': '{self.cds_request_format['data_format']}',
-                        'download_format': '{self.cds_request_format['download_format']}',
-                        'area': {eo_request.collected_eorequests.abbox}
-                    }}
-
-                    client = cdsapi.Client()
-                    client.retrieve(dataset, request).download()
-                """
-        return code
     
     def _process_windspeed(self, ds):
         """

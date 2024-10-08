@@ -1,11 +1,9 @@
 import transformers
 import torch
 
-from huggingface_hub import login
+# Class that generates the response on basis of the user and 
+# agents to collect the parameters for further pipeline
 
-# login(token='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')
-
-# Class that generates the response on basis of the user and agents to collect the parameters for further pipeline
 class LargeLanguageModelProcessor():
     def __init__(self):
         self.llm = "meta-llama/Meta-Llama-3-8B-Instruct"
@@ -13,7 +11,9 @@ class LargeLanguageModelProcessor():
             "text-generation",
             model=self.llm,
             device=0 if torch.cuda.is_available() else -1,  # Use GPU if available
-            model_kwargs={"torch_dtype": torch.float16 if torch.cuda.is_available() else torch.bfloat16},
+            model_kwargs={
+                "torch_dtype": torch.float16 if torch.cuda.is_available() else torch.bfloat16
+                },
         )
     def generate_response(self, system_prompt):
         """
@@ -21,15 +21,18 @@ class LargeLanguageModelProcessor():
         """
 
         messages = [
-            {"role": "system", "content": system_prompt},
+            {
+                "role": "system", 
+                "content": system_prompt
+            }
         ]
         # Generate the response
         outputs = self.pipeline(
-        messages,
-        max_new_tokens = 4000,
-        do_sample = True,
-        temperature = 0.5,
-        top_p=0.95,
+            messages,
+            max_new_tokens = 4000,
+            do_sample = True,
+            temperature = 0.5,
+            top_p=0.95,
         )
 
         # Extract the generated text

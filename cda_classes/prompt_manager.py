@@ -7,7 +7,9 @@ from datetime import datetime
 from utils.utils import Utilities
 from loguru import logger
 
-# Class for the creation of system prompts for the agents to get the parameters that needed to extract
+# Class for the creation of system prompts for the agents 
+# to get the parameters that needed to extract
+
 class PromptManager():
     def __init__(self, llm_handler: LargeLanguageModelProcessor):
         self.llm_handler = llm_handler
@@ -16,10 +18,12 @@ class PromptManager():
         self.request = None
         self.analysis_handler = AnalysisHandler()
         
-    # function to build the specialized agent on basis of pre build system prompts and user prompts that get concatenated
+    # function to build the specialized agent on basis of 
+    # pre build system prompts and user prompts that get concatenated
     def retrieve_information(self, agent_type, user_prompt):
         system_prompt = self.construct_system_prompt(agent_type, user_prompt)
         max_retries = 5
+        
         for attempt in range(max_retries):
             try:
                 # Try to generate a response using the LLM handler
@@ -51,13 +55,17 @@ class PromptManager():
                     logger.error("Max retries reached. Unable to retrieve information.")
                     return {"error": "Unable to retrieve information after multiple attempts."}  # Return an error after retries
 
-    # create callback to the user either to inform for missing information or for correct request
-    def callback_assistant_to_user(self, agent_type, user_prompt, request: EORequest):
+    # create callback to the user either 
+    # to inform for missing information or for correct request
+    def callback_assistant_to_user(
+        self, agent_type, user_prompt, request: EORequest
+    ):
         self.request = request
         system_prompt = self.construct_system_prompt(agent_type, user_prompt)
         self.callback = system_prompt
         
-    # specialized agents in form of prebuild system prompts are loaded of the yaml file 
+    # specialized agents in form of prebuild 
+    # system prompts are loaded of the yaml file 
     def __load_agents(self):
         self.__agents = Utilities.load_config_file("yaml/agents.yaml")
 
@@ -73,6 +81,7 @@ class PromptManager():
 
         # Format the general template with the attribute details
         system_prompt = self.__agents['general_template'].format(
+            
             expertise_area  = attributes["expertise_area"],
             task_description = attributes["task_description"],
             prompt = user_prompt,
@@ -82,21 +91,39 @@ class PromptManager():
             guideline_2 = attributes["guideline_2"],
             guideline_3 = attributes["guideline_3"],
             guideline_4 = attributes["guideline_4"]
-            )
+        )
         
         if agent_type == "specific_product_agent":
-            system_prompt = system_prompt.format(specific_product_list = self.specific_product_list)
+            system_prompt = system_prompt.format(
+                specific_product_list = self.specific_product_list
+                )
         elif agent_type == "review_agent":
+            
             if len(self.request.request_timeframes) == 1:
-                timeframes = f'{self.request.request_timeframes[0].startdate.date()} to {self.request.request_timeframes[0].enddate.date()}'
+                
+                timeframes = (
+                    f"""
+                        {self.request.request_timeframes[0].startdate.date()} to 
+                        {self.request.request_timeframes[0].enddate.date()}
+                    """
+                )
             else:    
-                timeframes = ', '.join(f'{ts.startdate_str} to {ts.enddate.date()}' for ts in self.request.request_timeframes[:-1])
+                timeframes = ', '.join(
+                    f"{ts.startdate_str} to {ts.enddate.date()}"
+                    for ts in self.request.request_timeframes[:-1]
+                )
             if len(self.request.request_timeframes) > 1:
-                timeframes += f' and {self.request.request_timeframes[-1].startdate.date()} to {self.request.request_timeframes[-1].enddate.date()}'
+                
+                timeframes += (
+                    f""" 
+                        and {self.request.request_timeframes[-1].startdate.date()} to 
+                        {self.request.request_timeframes[-1].enddate.date()}
+                    """
+                )
 
             match(self.request.request_analysis[0]):
+                
                 case "basic_analysis":
-
                     analysis_type = 'Basic Analysis'
 
                 case "comparison":
@@ -106,36 +133,47 @@ class PromptManager():
                     analysis_type = 'Prediction'
                 case _:  # Fallback case to handle unexpected values
                     analysis_type = 'Unspecified Analysis'
+                    
             # Determine whether to use "period" or "periods"
             period_label = "period" if len(self.request.request_timeframes) == 1 else "periods"
             
-            system_prompt = f"""
-            <p style='color: white;'>
-                I will search for the climate product for 
-                <span style='background-color:#292C37; color:white; padding: 2px 2px; border-radius: 5px;'>{', '.join(self.request.request_locations)}</span> 
-                covering the {period_label} <span style='background-color:#292C37; color:white; padding: 2px 2px; border-radius: 5px;'>{timeframes}</span>. 
-                The primary focus is on the category 
-                <span style='background-color:#292C37; color:white; padding: 2px 2px; border-radius: 5px;'>{self.request.request_product[0]}</span>, 
-                specifically looking at the variable 
-                <span style='background-color:#292C37; color:white; padding: 2px 2px; border-radius: 5px;'>{self.request.request_specific_product[0]}</span>. 
-                The analysis type being displayed is a 
-                <span style='background-color:#292C37; color:white; padding: 2px 2px; border-radius: 5px;'>{analysis_type}</span>.
-            </p>
-            """
+            system_prompt = (
+                f"""
+                    <p style='color: white;'>
+                        I will search for the climate product for 
+                        <span style='background-color:#292C37; color:white; padding: 2px 2px; border-radius: 5px;'>{', '.join(self.request.request_locations)}</span> 
+                        covering the {period_label} <span style='background-color:#292C37; color:white; padding: 2px 2px; border-radius: 5px;'>{timeframes}</span>. 
+                        The primary focus is on the category 
+                        <span style='background-color:#292C37; color:white; padding: 2px 2px; border-radius: 5px;'>{self.request.request_product[0]}</span>, 
+                        specifically looking at the variable 
+                        <span style='background-color:#292C37; color:white; padding: 2px 2px; border-radius: 5px;'>{self.request.request_specific_product[0]}</span>. 
+                        The analysis type being displayed is a 
+                        <span style='background-color:#292C37; color:white; padding: 2px 2px; border-radius: 5px;'>{analysis_type}</span>.
+                    </p>
+                """
+            )
             
         elif agent_type == "analysis_agent":
+            
             temp_prompt = string.Template(system_prompt)
             system_prompt = temp_prompt.safe_substitute(
                 {'analysis_types' : self.analysis_handler.analysis_types})
+            
         elif agent_type == "missing_info_agent":
+            
             formatted_string = '\n'.join(f"- {item.replace('request_', '').capitalize()}" for item in self.request)
-            system_prompt = f"Thank you for providing the product details. However, some required information is missing:\n\n{formatted_string}\n\nCould you please provide the missing information so I can assist you further?"
+            system_prompt = f"""
+                Thank you for providing the product details. 
+                However, some required information is missing:
+                \n\n{formatted_string}\n\n
+                Could you please provide the missing information 
+                so I can assist you further?
+            """
+            
         elif agent_type == "time_range_extraction_agent":
+            
             now = datetime.now()
             date_str = now.strftime('%Y')
             system_prompt = system_prompt.format(current_date = date_str)
 
-        return system_prompt
-    
-    # show me temperature in rome in 2012
-    
+        return system_prompt    
