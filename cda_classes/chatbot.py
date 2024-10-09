@@ -537,18 +537,14 @@ class Chatbot:
                     != sub_request.timeframe_object.enddate.year
                 ):
                     tab_name = (
-                        f"""
-                            {sub_request.location} {sub_request.timeframe_object.startdate.year}-
-                            {sub_request.timeframe_object.enddate.year}
-                        """
+                        f"{sub_request.location} {sub_request.timeframe_object.startdate.year}-"
+                        f"{sub_request.timeframe_object.enddate.year}"
                     )
 
                 else:
                     tab_name = (
-                        f"""
-                            {sub_request.location} 
-                            {sub_request.timeframe_object.startdate.year}
-                        """
+                        f"{sub_request.location} "
+                        f"{sub_request.timeframe_object.startdate.year}"
                     )
                 tab_names.append(tab_name)
             analysis_header = "Basic Analysis"
@@ -582,17 +578,13 @@ class Chatbot:
                 != self.request.collected_sub_requests[0].timeframe_object.enddate.year
             ):
                 date_ranges = (
-                        f"""
-                        {self.request.collected_sub_requests[0].timeframe_object.startdate.year}-
-                        {self.request.collected_sub_requests[0].timeframe_object.enddate.year}
-                        """
+                        f"{self.request.collected_sub_requests[0].timeframe_object.startdate.year}-"
+                        f"{self.request.collected_sub_requests[0].timeframe_object.enddate.year}"
                 )
                 
             else:
                 date_ranges = (
-                        f"""
-                            {self.request.collected_sub_requests[0].timeframe_object.startdate.year}
-                        """
+                        f"{self.request.collected_sub_requests[0].timeframe_object.startdate.year}"
                 )
                 
             tab_names = [f"{locations} in {date_ranges}"]
