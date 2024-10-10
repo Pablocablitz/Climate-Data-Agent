@@ -10,7 +10,7 @@ from datetime import datetime
 from utils.utils import Utilities, apply_timing_decorator
 from .eorequest import EORequest
 
-
+# class to handle the different ways of visualizing the user request
 @apply_timing_decorator
 class AnalysisHandler:
     def __init__(self):
@@ -27,16 +27,17 @@ class AnalysisHandler:
             "#bcbd22",  # Olive Green
             "#17becf",  # Teal
         ]
-
+    # function to process the user request when basic analysis is set
     def basic_analysis(self, eo_request: EORequest):
         figures = []
         messages = []
         for request in eo_request.collected_sub_requests:
             df = self.get_monthly_mean_dataframe(request)
-
+            
+            # creating statistics
             minval, maxval = self.get_min_max_from_dataframe(df)
             avgval = df["y"].mean()
-
+            
             figure = self.get_plot_from_dataframe(
                 df,
                 f"{eo_request.variable_long_name} [{eo_request.variable_units}]",
@@ -49,10 +50,12 @@ class AnalysisHandler:
             messages.append(message)
 
         return figures, messages
-
+    
+    # function to process the user request when prediction is set
     def predictions(self, eo_request: EORequest):
         figures = []
         messages = []
+        
         for request in eo_request.collected_sub_requests:
             df = self._get_dataframe_from_eorequest(request)
             model = Prophet()
@@ -439,6 +442,7 @@ class AnalysisHandler:
         rounded_std = round(std, 2)
         rounded_avg = round(avg, 2)
         rounded_range = round(maxval - minval, 2)
+        
         # Construct the string with formatted bullet points
         constructed_string = (
             f"""
