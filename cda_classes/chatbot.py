@@ -364,7 +364,7 @@ class Chatbot:
     def search_and_check_all_loc(self, locations, user_prompt):
         threshold = 70  # Define your threshold for fuzzy matching
 
-        # loop iterates over user prompt until no location is found any more
+        # Loop until no location is found
         while locations and locations[0] not in ["None", None]:
             # Convert found locations to lowercase for case-insensitive comparison
             found_locations_lower = [loc.lower() for loc in locations]
@@ -372,79 +372,50 @@ class Chatbot:
             # Split the user prompt into words and convert to lowercase
             words_in_prompt = [word.lower() for word in user_prompt.split()]
 
-            # Keep track of matches to clean from the user prompt
+            # Track matches to remove from the prompt
             matches_to_remove = []
 
-            # Use fuzzy matching to find the best match for the found locations
+            # Fuzzy matching to find best matches for found locations
             for loc in found_locations_lower:
-                # Check if the location consists of two words
-                loc_words = loc.split()
-
-                if len(loc_words) == 2:
-                    # Perform word-by-word fuzzy matching
-                    for word in loc_words:
-                        match, score, _ = process.extractOne(
-                            word, words_in_prompt, scorer=fuzz.token_sort_ratio
-                        )
-                        if score >= threshold:
-                            matches_to_remove.append(
-                                match
-                            )  # Store the location, not the word from prompt, for case consistency
-                            print(f"Match: {match} with score: {score}")
-                else:
-                    # Fuzzy match for single-word locations
-                    match, score, _ = process.extractOne(
-                        loc, words_in_prompt, scorer=fuzz.token_sort_ratio
-                    )
-                    if score >= threshold:
-                        matches_to_remove.append(match)
-                        print(f"Match: {match} with score: {score}")
+                match, score, _ = process.extractOne(loc, words_in_prompt, scorer=fuzz.token_sort_ratio)
+                if score >= threshold:
+                    matches_to_remove.append(loc)
+                    print(f"Match: {loc} with score: {score}")
 
             # Clean the user prompt based on found matches
             cleaned_prompt = user_prompt
             for match in matches_to_remove:
-                # Remove matched terms from the cleaned_prompt, 
-                # using case-insensitive matching
+                # Remove matched terms from cleaned_prompt
                 cleaned_prompt = re.sub(
-                    r"\b" + re.escape(match) + r"\b[,\s]*",
+                    r"\b" + re.escape(match) + r"\b[,\s!?.]*",
                     "",
                     cleaned_prompt,
                     flags=re.IGNORECASE,
                 )
 
-            # Remove "and" if it's left with dangling commas or spaces
-            cleaned_prompt = re.sub(
-                r"\band\b[,\s]*", "", cleaned_prompt, flags=re.IGNORECASE
-            )
-
-            # Handle leftover commas, spaces, or "and"
-            cleaned_prompt = re.sub(
-                r"\s*,\s*", ", ", cleaned_prompt
-            )  # Ensure single comma with a space after it
-            cleaned_prompt = re.sub(
-                r",\s*$", "", cleaned_prompt
-            )  # Remove trailing commas
+            # Handle leftover punctuation and whitespace
+            cleaned_prompt = re.sub(r"\band\b[,\s]*", "", cleaned_prompt, flags=re.IGNORECASE)
+            cleaned_prompt = re.sub(r"\s*,\s*", ", ", cleaned_prompt)  # Normalize commas
+            cleaned_prompt = re.sub(r",\s*$", "", cleaned_prompt)  # Remove trailing commas
             cleaned_prompt = re.sub(r"\s+", " ", cleaned_prompt)  # Remove extra spaces
-            cleaned_prompt = cleaned_prompt.strip()  # Remove leading/trailing spaces
+            cleaned_prompt = cleaned_prompt.strip()  # Trim whitespace
 
             print("Cleaned Prompt:", cleaned_prompt)
 
             # Retrieve new locations from the cleaned prompt
-            found_location = self.prompt_manager.retrieve_information(
-                "location_agent", cleaned_prompt
-            )
-            is_location = self.prompt_manager.retrieve_information(
-                "binary_location_detection", found_location[0]
-            )
+            found_location = self.prompt_manager.retrieve_information("location_agent", cleaned_prompt)
+            
+            if found_location:  # Ensure found_location is not empty
+                is_location = self.prompt_manager.retrieve_information("binary_location_detection", found_location[0])
 
-            if is_location[0] == "False":
-                return locations
-            else:
-                # Check if the new found location is not already in the existing found locations
-                if found_location[0].lower() not in found_locations_lower:
-                    locations.append(found_location[0])
+                if is_location[0] == "False":
+                    return locations  # Exit if no valid location is found
+                else:
+                    # Check if the new found location is not already in the existing found locations
+                    if found_location[0].lower() not in found_locations_lower:
+                        locations.append(found_location[0])  # Add new location
 
-        return locations  # Return locations when loop is complete
+        return locations  # Return updated locations list
 
     # checks if the user is using wrong analysis types regarding to the timeframe
     # For Example: User says Prediction for the past -> contradiction causes user callback
@@ -462,15 +433,15 @@ class Chatbot:
                     or self.request.request_analysis[0] == "comparison"
                 ):
                     if (
-                        timeframe.startdate >= cutoff_date_present
-                        or timeframe.enddate >= cutoff_date_present
+                        timeframe.startdate.year >= cutoff_date_present.year
+                        or timeframe.enddate.year >= cutoff_date_present.year
                     ):
                         with st.chat_message("assistant"):
                             analysis_incompatability = (
                                 f"""
                                     The {self.request.request_analysis[0]} 
                                     cannot be shown for the current date 
-                                    and beyond (after July 2024). 
+                                    and beyond (after 2024). 
                                     Please try another time frame.
                                     """
                             )
@@ -507,14 +478,14 @@ class Chatbot:
                 # Check for predictions
                 elif self.request.request_analysis[0] == "predictions":
                     if (
-                        timeframe.prediction_startdate < cutoff_date_present
-                        or timeframe.prediction_enddate < cutoff_date_present
+                        timeframe.prediction_startdate.year < cutoff_date_present.year
+                        or timeframe.prediction_enddate.year < cutoff_date_present.year
                     ):
                         with st.chat_message("assistant"):
                             analysis_incompatability = (
                                 f"""
                                     The {self.request.request_analysis[0]} 
-                                    cannot be shown for previous years before July 2024. 
+                                    cannot be shown for previous years before 2024. 
                                     Please try a timeframe towards the future!
                                 """
                             )

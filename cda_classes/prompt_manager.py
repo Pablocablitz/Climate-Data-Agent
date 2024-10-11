@@ -162,14 +162,13 @@ class PromptManager():
         elif agent_type == "missing_info_agent":
             
             formatted_string = '\n'.join(f"- {item.replace('request_', '').capitalize()}" for item in self.request)
-            system_prompt = f"""
-                Thank you for providing the product details. 
-                However, some required information is missing:
-                \n\n{formatted_string}\n\n
-                Could you please provide the missing information 
-                so I can assist you further?
-            """
-            
+            system_prompt = (
+            f"Thank you for providing the product details. "
+            f"However, some required information is missing:"
+            f"\n\n{formatted_string}\n\n"
+            f"Could you please provide the missing information " 
+            f"so I can assist you further?"
+            )            
         elif agent_type == "time_range_extraction_agent":
             
             now = datetime.now()

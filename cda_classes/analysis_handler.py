@@ -69,22 +69,20 @@ class AnalysisHandler:
             lowest_value = self.round_to_sig_figs(forecast["yhat"].min(), 3)
 
             message = (
-                f"""
-                    The prediction has been generated based on the historical 
-                    {eo_request.variable_long_name} data provided. The forecast
-                    covers the period from **{request.timeframe_object.prediction_startdate.date()}** 
-                    to **{request.timeframe_object.prediction_enddate.date()}** 
-                    and spans a total of **{periods} days**.\n\n
-                    You can expect the following key insights:\n\n
-                    - **Highest Predicted Value**: {highest_value} {eo_request.variable_units}\n
-                    - **Lowest Predicted Value**: {lowest_value} {eo_request.variable_units}\n
-                    - **Lower Confidence Interval**: 
-                    {self.round_to_sig_figs(forecast['yhat_lower'].min(), 3)} 
-                    {eo_request.variable_units}\n
-                    - **Upper Confidence Interval**: 
-                    {self.round_to_sig_figs(forecast['yhat_upper'].max(), 3)} 
-                    {eo_request.variable_units}\n
-                """
+                f"The prediction has been generated based on the historical "
+                f"{eo_request.variable_long_name} data provided. The forecast"
+                f"covers the period from **{request.timeframe_object.prediction_startdate.date()}** "
+                f"to **{request.timeframe_object.prediction_enddate.date()}** "
+                f"and spans a total of **{periods} days**.\n\n"
+                f"You can expect the following key insights:\n\n"
+                f"- **Highest Predicted Value**: {highest_value} {eo_request.variable_units}\n"
+                f"- **Lowest Predicted Value**: {lowest_value} {eo_request.variable_units}\n"
+                f"- **Lower Confidence Interval**: "
+                f"{self.round_to_sig_figs(forecast['yhat_lower'].min(), 3)} "
+                f"{eo_request.variable_units}\n"
+                f"- **Upper Confidence Interval**: "
+                f"{self.round_to_sig_figs(forecast['yhat_upper'].max(), 3)} "
+                f"{eo_request.variable_units}\n"
             )
             messages.append(message)
 
@@ -157,16 +155,14 @@ class AnalysisHandler:
                 eo_request.request_locations
             )
             message = (
-                f"""
-                    **Comparison of {eo_request.variable_long_name} 
-                    across multiple locations:**\n\n
-                    This plot compares the values of 
-                    **{eo_request.variable_long_name}** 
-                    for the following locations: 
-                    {formatted_loc_string}.\n\n
-                    Below is a summary of the 
-                    key statistics for each location:\n
-                """
+                f"**Comparison of {eo_request.variable_long_name}"
+                f" across multiple locations:**\n\n"
+                f"This plot compares the values of " 
+                f"**{eo_request.variable_long_name}**" 
+                f" for the following locations: "
+                f"{formatted_loc_string}.\n\n"
+                f"Below is a summary of the "
+                f"key statistics for each location:\n"
             )
             for sub_request, color in zip(
                 eo_request.collected_sub_requests, self.colors
@@ -225,11 +221,9 @@ class AnalysisHandler:
 
             # Initialize a message to describe the time range comparison
             message = (
-                f"""
-                    **Comparison of {eo_request.variable_long_name.capitalize()} 
-                    across different time ranges:**\n\n
-                    Below is a summary of the key statistics for each time range:\n
-                """
+                f"**Comparison of {eo_request.variable_long_name.capitalize()} "
+                f"across different time ranges:**\n\n"
+                f"Below is a summary of the key statistics for each time range:\n"
             )
 
             # Iterate over each request and generate the plot
@@ -269,13 +263,11 @@ class AnalysisHandler:
 
                 # Append statistics for the current time range
                 message += (
-                    f"""
-                        - **Time Range**: {start_date} to {end_date}\n"
-                        - **Average**: {avg_value:.2f} {eo_request.variable_units}\n
-                        - **Min**: {min_value:.2f} {eo_request.variable_units}, 
-                        **Max**: {max_value:.2f} {eo_request.variable_units}\n
-                        - **Range**: {range_value:.2f} {eo_request.variable_units}\n\n
-                    """
+                    f"- **Time Range**: {start_date} to {end_date}\n"
+                    f"- **Average**: {avg_value:.2f} {eo_request.variable_units}\n"
+                    f"- **Min**: {min_value:.2f} {eo_request.variable_units},"
+                    f"**Max**: {max_value:.2f} {eo_request.variable_units}\n"
+                    f"- **Range**: {range_value:.2f} {eo_request.variable_units}\n\n"
                 )
 
             formatted_time_ranges = " and ".join(time_ranges)
