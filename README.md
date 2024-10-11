@@ -43,12 +43,12 @@ To run the **Climate-Data-Agent** application, follow these steps:
 
     To use the LLaMA 3 8B model, you need to authenticate with your Hugging Face API key. Follow these steps:
 
-    ### 2.1 Get Your Hugging Face API Key:
+    **2.1 Get Your Hugging Face API Key**:
         - Log in to your Hugging Face account [here](https://huggingface.co/).
         - Go to your [Access Tokens](https://huggingface.co/settings/tokens) and create a new token with the necessary permissions (either Read or Write permissions should work).
 
-    ### 2.2 Insert Your Hugging Face API Key in the Code:
-        Open the `main.py` file and find the following section at the top of the code:
+    **2.2 Insert Your Hugging Face API Key in the Code**:
+    Open the `main.py` file and find the following section at the top of the code:
 
         ```python
             # First, activate the login to download and use the model
@@ -57,7 +57,7 @@ To run the **Climate-Data-Agent** application, follow these steps:
             login("YOUR_HHF_API_KEY")S
         ```
 
-        Replace `"YOUR_HHF_API_KEY"` with your actual Hugging Face API key:
+    Replace `"YOUR_HHF_API_KEY"` with your actual Hugging Face API key:
 
         ```python
             login("your_actual_api_key_here")
