@@ -3,6 +3,10 @@ import streamlit as st
 from streamlit_extras.bottom_container import bottom
 from streamlit_app.sidebar import sidebar
 from cda_classes.chatbot import Chatbot
+from huggingface_hub import login
+
+# For first use activate the login to download and use the model
+# login("YOUR HHF API KEY")
 
 class EOChatBot:
     def __init__(self):

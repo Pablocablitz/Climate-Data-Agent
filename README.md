@@ -38,15 +38,39 @@ To run the **Climate-Data-Agent** application, follow these steps:
     ```bash
     pip install -r requirements.txt
     ```
+
+2. **Setting Up Hugging Face API Key**
+
+To use the LLaMA 3 8B model, you need to authenticate with your Hugging Face API key. Follow these steps:
+
+2.1 **Get Your Hugging Face API Key**:
+    - Log in to your Hugging Face account [here](https://huggingface.co/).
+    - Go to your [Access Tokens](https://huggingface.co/settings/tokens) and create a new token with the necessary permissions (either Read or Write permissions should work).
+
+2.2 **Insert Your Hugging Face API Key in the Code**:
+    Open the `main.py` file and find the following section at the top of the code:
+
+    ```python
+    # First, activate the login to download and use the model
+    # Make sure to insert your Hugging Face API key here
+    from huggingface_hub import login
+    login("YOUR_HHF_API_KEY")
+    ```
+
+    Replace `"YOUR_HHF_API_KEY"` with your actual Hugging Face API key:
+
+    ```python
+    login("your_actual_api_key_here")
+    ```
     
-2. **Launch the Streamlit application**: Execute the following command in the terminal:
+3. **Launch the Streamlit application**: Execute the following command in the terminal:
     ```bash
     streamlit run main.py
     ```
     
-3. **Interact with the Chatbot Interface**: Open the application in your default web browser and start asking questions in natural language.
+4. **Interact with the Chatbot Interface**: Open the application in your default web browser and start asking questions in natural language.
     
-4. **Visualization and Analysis**: The application will provide visual outputs, including graphs and optional animations, along with a brief analysis of the data.
+5. **Visualization and Analysis**: The application will provide visual outputs, including graphs and optional animations, along with a brief analysis of the data.
 
 ## Core Components
 
