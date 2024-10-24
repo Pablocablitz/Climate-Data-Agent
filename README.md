@@ -119,7 +119,3 @@ def process_request(self, user_prompt):
     with st.spinner("Downloading Data..."):
         self.request.collect_eorequests()
 ```
-
-### Summary:
-- The README now includes a comprehensive overview, covering all key sections including the project overview, features, repository introduction, how to run the code, core components (including detailed information about `main.py` and `chatbot.py`), installation instructions, and a conclusion.
-- You can copy this content directly into a file named `README.md` in your project repository. If you have any more requests or need further modifications, let me know!
